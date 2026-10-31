@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/*
+ * Retro Pop-Art design tokens.
+ * NOTE: Colors are HEX on purpose — html2canvas cannot parse Tailwind v4's
+ * default oklch() palette, so every color that ends up in an exported
+ * photo strip must come from these tokens (or other hex/rgb values).
+ */
+@theme {
+  --color-pop-cyan: #00e5ff;
+  --color-pop-magenta: #ff2bd6;
+  --color-pop-yellow: #ffe600;
+  --color-pop-green: #39ff14;
+  --color-ink: #0a0a0a;
+  --color-paper: #fff8e7;
+
+  --font-display: "Bangers", "Impact", system-ui, sans-serif;
+  --font-body: "Space Grotesk", system-ui, sans-serif;
+
+  --shadow-brutal-sm: 4px 4px 0 0 #0a0a0a;
+  --shadow-brutal: 6px 6px 0 0 #0a0a0a;
+  --shadow-brutal-lg: 10px 10px 0 0 #0a0a0a;
+}
+
+/* Comic-book outlined text */
+@utility text-outline {
+  -webkit-text-stroke: 3px var(--color-ink);
+  paint-order: stroke fill;
+}
+
+@utility text-outline-sm {
+  -webkit-text-stroke: 1.5px var(--color-ink);
+  paint-order: stroke fill;
+}
+
+/* Hard offset text shadow */
+@utility text-shadow-brutal {
+  text-shadow: 6px 6px 0 var(--color-ink);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+
+  body {
+    @apply bg-paper font-body text-ink antialiased;
+  }
+}
