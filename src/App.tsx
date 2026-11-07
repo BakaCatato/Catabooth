@@ -10,8 +10,10 @@ import Result from './screens/Result'
 import {
   LAYOUTS,
   getDefaultLayout,
+  type BoothMode,
   type FilterId,
   type FrameCount,
+  type FrameDesignId,
   type LayoutId,
   type PhotoDataUrl,
   type Screen,
@@ -23,18 +25,24 @@ import {
 
 interface BoothState {
   screen: Screen
+  boothMode: BoothMode
   frameCount: FrameCount
   photos: PhotoDataUrl[]
+  retakeIndex: number | null
   layout: LayoutId
   filter: FilterId
+  frameDesign: FrameDesignId
 }
 
 type BoothAction =
   | { type: 'START' }
+  | { type: 'SET_MODE'; boothMode: BoothMode }
   | { type: 'SELECT_FRAMES'; frameCount: FrameCount }
   | { type: 'CAPTURE_COMPLETE'; photos: PhotoDataUrl[] }
+  | { type: 'RETAKE_SINGLE'; index: number }
   | { type: 'SET_LAYOUT'; layout: LayoutId }
   | { type: 'SET_FILTER'; filter: FilterId }
+  | { type: 'SET_FRAME_DESIGN'; frameDesign: FrameDesignId }
   | { type: 'CONFIRM_DESIGN' }
   | { type: 'RETAKE' }
   | { type: 'BACK' }
@@ -42,10 +50,13 @@ type BoothAction =
 
 const INITIAL_STATE: BoothState = {
   screen: 'home',
+  boothMode: 'solo',
   frameCount: 4,
   photos: [],
+  retakeIndex: null,
   layout: 'vertical-strip',
-  filter: 'none',
+  filter: 'original',
+  frameDesign: 'classic-white',
 }
 
 const PREVIOUS_SCREEN: Record<Screen, Screen> = {
@@ -61,19 +72,51 @@ function boothReducer(state: BoothState, action: BoothAction): BoothState {
     case 'START':
       return { ...state, screen: 'frames' }
 
+    case 'SET_MODE':
+      return { ...state, boothMode: action.boothMode }
+
     case 'SELECT_FRAMES':
       return {
         ...state,
         frameCount: action.frameCount,
         layout: getDefaultLayout(action.frameCount),
         photos: [],
+        retakeIndex: null,
         screen: 'camera',
       }
 
-    case 'CAPTURE_COMPLETE':
-      // Guard: never advance with an incomplete set of shots
+    case 'CAPTURE_COMPLETE': {
+      // Selective retake mode: replace only that specific index in photos and return to customize
+      if (state.retakeIndex !== null) {
+        if (action.photos.length === 0) return state
+        const updated = [...state.photos]
+        updated[state.retakeIndex] = action.photos[0]
+        return {
+          ...state,
+          photos: updated,
+          retakeIndex: null,
+          screen: 'customize',
+        }
+      }
+
+      // Full capture mode: guard against incomplete set of shots
       if (action.photos.length !== state.frameCount) return state
-      return { ...state, photos: action.photos, filter: 'none', screen: 'customize' }
+      return {
+        ...state,
+        photos: action.photos,
+        retakeIndex: null,
+        filter: 'original',
+        screen: 'customize',
+      }
+    }
+
+    case 'RETAKE_SINGLE':
+      if (action.index < 0 || action.index >= state.photos.length) return state
+      return {
+        ...state,
+        retakeIndex: action.index,
+        screen: 'camera',
+      }
 
     case 'SET_LAYOUT': {
       const option = LAYOUTS.find((l) => l.id === action.layout)
@@ -84,19 +127,32 @@ function boothReducer(state: BoothState, action: BoothAction): BoothState {
     case 'SET_FILTER':
       return { ...state, filter: action.filter }
 
+    case 'SET_FRAME_DESIGN':
+      return { ...state, frameDesign: action.frameDesign }
+
     case 'CONFIRM_DESIGN':
       return state.photos.length > 0 ? { ...state, screen: 'result' } : state
 
     case 'RETAKE':
-      return { ...state, photos: [], screen: 'camera' }
+      return { ...state, photos: [], retakeIndex: null, screen: 'camera' }
 
     case 'BACK': {
-      // Going back from Customize means the shots are discarded → retake
+      // If cancelling a selective single-shot retake, return directly to Customize keeping existing photos
+      if (state.screen === 'camera' && state.retakeIndex !== null) {
+        return {
+          ...state,
+          retakeIndex: null,
+          screen: 'customize',
+        }
+      }
+
+      // Going back from Customize means the shots are discarded → full retake
       const discardPhotos = state.screen === 'customize'
       return {
         ...state,
         screen: PREVIOUS_SCREEN[state.screen],
         photos: discardPhotos ? [] : state.photos,
+        retakeIndex: null,
       }
     }
 
@@ -148,17 +204,21 @@ const screenVariants: Variants = {
 
 export default function App() {
   const [state, dispatch] = useReducer(boothReducer, INITIAL_STATE)
-  const { screen, frameCount, photos, layout, filter } = state
+  const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign } = state
 
   // `dispatch` is stable, so these handlers never change identity
   const actions = useMemo(
     () => ({
       start: () => dispatch({ type: 'START' }),
+      selectMode: (mode: BoothMode) => dispatch({ type: 'SET_MODE', boothMode: mode }),
       selectFrames: (count: FrameCount) => dispatch({ type: 'SELECT_FRAMES', frameCount: count }),
       completeCapture: (shots: PhotoDataUrl[]) =>
         dispatch({ type: 'CAPTURE_COMPLETE', photos: shots }),
+      retakeSingle: (index: number) => dispatch({ type: 'RETAKE_SINGLE', index }),
       setLayout: (id: LayoutId) => dispatch({ type: 'SET_LAYOUT', layout: id }),
       setFilter: (id: FilterId) => dispatch({ type: 'SET_FILTER', filter: id }),
+      setFrameDesign: (design: FrameDesignId) =>
+        dispatch({ type: 'SET_FRAME_DESIGN', frameDesign: design }),
       confirmDesign: () => dispatch({ type: 'CONFIRM_DESIGN' }),
       retake: () => dispatch({ type: 'RETAKE' }),
       back: () => dispatch({ type: 'BACK' }),
@@ -184,7 +244,9 @@ export default function App() {
       case 'frames':
         return (
           <FrameSelection
+            boothMode={boothMode}
             selected={frameCount}
+            onSelectMode={actions.selectMode}
             onSelect={actions.selectFrames}
             onBack={actions.back}
           />
@@ -193,7 +255,10 @@ export default function App() {
       case 'camera':
         return (
           <CameraScreen
+            boothMode={boothMode}
             frameCount={frameCount}
+            retakeIndex={retakeIndex}
+            existingPhotos={photos}
             onComplete={actions.completeCapture}
             onBack={actions.back}
           />
@@ -202,12 +267,16 @@ export default function App() {
       case 'customize':
         return (
           <Customization
+            boothMode={boothMode}
             photos={photos}
             frameCount={frameCount}
             layout={layout}
             filter={filter}
+            frameDesign={frameDesign}
             onLayoutChange={actions.setLayout}
             onFilterChange={actions.setFilter}
+            onFrameDesignChange={actions.setFrameDesign}
+            onRetakeSingle={actions.retakeSingle}
             onConfirm={actions.confirmDesign}
             onRetake={actions.retake}
           />
@@ -216,9 +285,11 @@ export default function App() {
       case 'result':
         return (
           <Result
+            boothMode={boothMode}
             photos={photos}
             layout={layout}
             filter={filter}
+            frameDesign={frameDesign}
             onBack={actions.back}
             onRestart={actions.restart}
           />
