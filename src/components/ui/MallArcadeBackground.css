@@ -75,8 +75,14 @@
 .mall-stanchion { position: absolute; bottom: 11%; right: max(12px, calc(50% - 625px)); width: 130px; }
 
 /* Reserve a strip of wall for the sign on every screen. */
-.mall-content { padding-top: 108px; }
-.mall-content > section, .mall-content > div > section { min-height: calc(100dvh - 108px); }
+.mall-content { --mall-header-height: 100px; padding-top: var(--mall-header-height); }
+
+@media (min-width: 768px) {
+  .mall-content { --mall-header-height: clamp(40px, 7dvh, 64px); }
+  .mall-hanging-sign { top: 8px; padding: 4px 14px; font-size: 14px; }
+  .mall-sign-star { font-size: 20px; }
+  .mall-ceiling-lamp { top: -28px; width: 85px; }
+}
 
 @media (max-width: 900px) {
   .mall-ceiling-lamp { left: -28px; width: 90px; }

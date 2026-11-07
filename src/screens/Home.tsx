@@ -52,7 +52,7 @@ function FeaturedStrips({ reducedMotion }: { reducedMotion: boolean }) {
       <h2 className="relative z-10 border-b-4 border-ink bg-[#fff0b5] px-2 py-2 text-center font-display text-2xl tracking-[0.12em]">
         FEATURED STRIPS
       </h2>
-      <div className="relative px-4 pb-4 pt-10" aria-hidden="true">
+      <div className="booth-showcase-body relative px-4 pb-4 pt-10" aria-hidden="true">
         <svg className="absolute left-0 top-3 h-9 w-full" viewBox="0 0 300 36" preserveAspectRatio="none" fill="none">
           <path d="M-5 8Q150 48 305 8" stroke="#0a0a0a" strokeWidth="2.5" />
         </svg>
@@ -76,7 +76,7 @@ function FeaturedStrips({ reducedMotion }: { reducedMotion: boolean }) {
             </motion.div>
           ))}
         </div>
-        <p className="mt-6 text-center text-[9px] font-bold tracking-[0.2em]">GOOD TIMES, ON REPEAT.</p>
+        <p className="booth-showcase-caption mt-6 text-center text-[9px] font-bold tracking-[0.2em]">GOOD TIMES, ON REPEAT.</p>
       </div>
       <p className="sr-only">Four colorful photo strips with playful illustrated cats hang from a string.</p>
     </div>
@@ -168,13 +168,13 @@ export default function Home({ onStart }: HomeProps) {
 
   return (
     <section className="booth-home relative flex flex-col items-center justify-center px-4 pb-12 pt-4 text-ink sm:px-8 sm:pb-14" aria-labelledby="booth-title">
-      <div className="relative mb-6 flex items-center gap-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] sm:text-xs">
+      <div className="booth-eyebrow relative mb-6 flex items-center gap-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] sm:text-xs">
         <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
         A little booth. A lot of memories.
         <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
       </div>
 
-      <div className="relative isolate w-full max-w-4xl pb-4">
+      <div className="booth-shell relative isolate w-full max-w-4xl pb-4">
         <div className="booth-machine relative rounded-t-[2rem] rounded-b-xl border-4 border-ink bg-paper">
           <header className="booth-marquee relative border-b-4 border-ink px-5 py-5 sm:px-9">
             <div className="booth-bulbs booth-bulbs-top" aria-hidden="true">
@@ -193,9 +193,9 @@ export default function Home({ onStart }: HomeProps) {
             </div>
           </header>
 
-          <div className="grid gap-6 p-4 sm:grid-cols-[0.95fr_1.05fr] sm:gap-7 sm:p-7">
+          <div className="booth-machine-grid grid gap-4 p-3 md:grid-cols-[0.95fr_1.05fr] md:gap-5 md:p-5">
             <div className="flex min-w-0 flex-col">
-              <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="booth-visitor-row mb-4 flex items-center justify-between gap-2">
                 <span className="booth-visitor-badge"><Star size={13} aria-hidden="true" /> VISITOR #{String(visitorCount).padStart(4, '0')}</span>
                 <span className="booth-entrance-note" aria-hidden="true">hi, happy human!</span>
               </div>
@@ -207,14 +207,14 @@ export default function Home({ onStart }: HomeProps) {
                 onInsertSound={() => playSound('insert')}
                 onInserted={unlockCurtain}
               />
-              <div className="mt-5 flex items-center justify-center gap-2 text-center text-[9px] font-bold uppercase tracking-[0.14em]">
+              <div className="booth-note mt-5 flex items-center justify-center gap-2 text-center text-[9px] font-bold uppercase tracking-[0.14em]">
                 <Cat size={19} strokeWidth={2.5} aria-hidden="true" />
                 Made for you & your favorite humans
               </div>
             </div>
 
             <div className="flex min-w-0 flex-col">
-              <div className="mb-3 flex items-center justify-between gap-2 px-1">
+              <div className="booth-status-row mb-3 flex items-center justify-between gap-2 px-1">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em]">
                   <span className={`h-2.5 w-2.5 rounded-full border-2 border-ink ${isClosing ? 'bg-[#e9b8c7]' : 'bg-[#b8d8a0]'}`} aria-hidden="true" />
                   {isClosing ? 'IN SESSION' : tokenStep === 'token-inserted' ? 'BOOTH IS ALL YOURS' : 'ONE COIN TO BEGIN'}
@@ -258,7 +258,7 @@ export default function Home({ onStart }: HomeProps) {
                 </div>
                 <div className="booth-threshold" aria-hidden="true" />
               </div>
-              <p className="mt-3 text-center text-[9px] font-bold uppercase tracking-[0.18em]">Your best side? Every side.</p>
+              <p className="booth-door-caption mt-3 text-center text-[9px] font-bold uppercase tracking-[0.18em]">Your best side? Every side.</p>
             </div>
           </div>
 
@@ -272,7 +272,7 @@ export default function Home({ onStart }: HomeProps) {
         <span className="booth-foot right-8" aria-hidden="true" />
       </div>
 
-      <div className="relative mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] font-bold uppercase tracking-[0.12em] sm:gap-x-8">
+      <div className="booth-feature-list relative mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] font-bold uppercase tracking-[0.12em] sm:gap-x-8">
         <span className="flex items-center gap-1.5"><Camera size={15} aria-hidden="true" /> 2–8 shots</span>
         <span className="flex items-center gap-1.5"><Sparkles size={15} aria-hidden="true" /> Retro filters</span>
         <span className="flex items-center gap-1.5"><Heart size={15} aria-hidden="true" /> Yours to keep</span>

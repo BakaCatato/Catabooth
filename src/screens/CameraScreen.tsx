@@ -2,25 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Webcam from 'react-webcam'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  ArrowLeft,
   ArrowLeftRight,
   Camera,
   CameraOff,
   LoaderCircle,
   RefreshCw,
-  RotateCcw,
+  Heart,
   TriangleAlert,
   User,
   Users,
 } from 'lucide-react'
 
+import ScreenHeader from '../components/ui/ScreenHeader'
+import BrutalButton from '../components/ui/BrutalButton'
 import { BOOTH_MODES, type CameraScreenProps, type PhotoDataUrl } from '../types/photobooth'
 
 /* ------------------------------------------------------------------ */
 /*  Static config & helpers                                            */
 /* ------------------------------------------------------------------ */
-
-const INK = '#0a0a0a'
 
 type CameraStatus = 'pending' | 'ready' | 'error' | 'unsupported'
 
@@ -283,321 +282,115 @@ export default function CameraScreen({
   }, [isSelectiveRetake, status, startCapture])
 
   return (
-    <section className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-4 py-6 md:py-10">
-      {/* ---------- Header ---------- */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <motion.button
-            type="button"
-            onClick={handleBack}
-            aria-label="Go back"
-            whileHover={{ rotate: -8, scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
-            className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border-4 border-ink bg-white shadow-brutal-sm outline-none focus-visible:ring-4 focus-visible:ring-pop-yellow"
-          >
-            <ArrowLeft className="h-6 w-6" strokeWidth={3} />
-          </motion.button>
+    <section className="app-screen camera-screen">
+      <ScreenHeader
+        title={isSelectiveRetake ? `One more, shot #${retakeIndex + 1}!` : 'Make yourself at home.'}
+        subtitle={isSelectiveRetake ? 'A fresh take. Same happy memory.' : `${modeInfo.label} · ${frameCount} shots · ${countdownSeconds}s to pose`}
+        onBack={handleBack}
+        aside={<span className="doodle-pill bg-mint"><ModeIcon size={16} aria-hidden="true" /> {isSelectiveRetake ? 'QUICK RETAKE' : 'YOUR LITTLE PHOTO CORNER'}</span>}
+      />
 
-          <div>
-            <h1 className="font-display text-4xl leading-none tracking-wide text-white text-outline [text-shadow:4px_4px_0_#0a0a0a] sm:text-5xl md:text-6xl">
-              {isSelectiveRetake ? `Retake Shot #${retakeIndex + 1}!` : 'Strike a Pose!'}
-            </h1>
-            <p className="mt-1.5 inline-block -rotate-1 rounded-md border-3 border-ink bg-white px-2.5 py-0.5 text-xs font-bold uppercase tracking-widest md:text-sm">
-              {isSelectiveRetake
-                ? `Replacing Shot #${retakeIndex + 1} · 3s Timer`
-                : `${modeInfo.label} · ${frameCount} Shots · ${countdownSeconds}s Timer`}
-            </p>
+      <div className="camera-layout">
+        <div className="camera-cabin">
+          <div className="camera-cabin-label">
+            <span><span className={`camera-indicator ${status === 'ready' ? 'is-ready' : ''}`} /> {status === 'ready' ? 'CAMERA IS READY' : 'SETTLE IN, LITTLE STAR'}</span>
+            <span className="menu-handwriting">look here & smile ✧</span>
           </div>
-        </div>
-
-        {isSelectiveRetake ? (
-          <span className="inline-flex items-center gap-2 rounded-full border-4 border-ink bg-pop-yellow px-4 py-1.5 font-display text-xl tracking-wider text-ink shadow-brutal-sm">
-            <RotateCcw className="h-5 w-5" strokeWidth={3} />
-            QUICK RETAKE (3s)
-          </span>
-        ) : (
-          <span
-            className={`inline-flex items-center gap-2 rounded-full border-4 border-ink px-4 py-1.5 font-display text-xl tracking-wider shadow-brutal-sm ${
-              boothMode === 'together' ? 'bg-pop-yellow text-ink' : 'bg-pop-cyan text-ink'
-            }`}
-          >
-            <ModeIcon className="h-5 w-5" strokeWidth={3} />
-            {modeInfo.label} ({countdownSeconds}s)
-          </span>
-        )}
-      </header>
-
-      {/* ---------- Main Booth Area ---------- */}
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
-        {/* Left: Viewfinder + Controls */}
-        <div className="flex flex-col gap-5">
-          {/* Comic-style viewfinder */}
-          <div className="relative mx-auto aspect-4/3 w-full max-w-3xl overflow-hidden rounded-2xl border-[6px] border-ink bg-ink shadow-brutal-lg">
-            {status !== 'unsupported' && (
-              <Webcam
-                key={retryKey}
-                ref={webcamRef}
-                audio={false}
-                mirrored={mirrored}
-                screenshotFormat="image/jpeg"
-                screenshotQuality={0.92}
-                forceScreenshotSourceSize
-                disablePictureInPicture
-                videoConstraints={VIDEO_CONSTRAINTS}
-                onUserMedia={handleUserMedia}
-                onUserMediaError={handleUserMediaError}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            )}
-
-            {/* Comic crop-mark corners */}
-            {VIEWFINDER_CORNERS.map((pos) => (
-              <span
-                key={pos}
-                aria-hidden
-                className={`pointer-events-none absolute z-10 h-10 w-10 border-white ${pos}`}
-              />
-            ))}
-
-            {/* Top badges */}
-            {status === 'ready' && (
-              <span className="absolute left-16 top-4 z-10 flex items-center gap-1.5 rounded-md border-3 border-ink bg-white px-2.5 py-0.5 text-xs font-bold uppercase tracking-widest">
-                <motion.span
-                  className="h-2.5 w-2.5 rounded-full bg-pop-magenta"
-                  animate={{ opacity: [1, 0.2, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity }}
+          <div className="camera-stage">
+            <div className="camera-viewfinder">
+              {status !== 'unsupported' && (
+                <Webcam
+                  key={retryKey}
+                  ref={webcamRef}
+                  audio={false}
+                  mirrored={mirrored}
+                  screenshotFormat="image/jpeg"
+                  screenshotQuality={0.92}
+                  forceScreenshotSourceSize
+                  disablePictureInPicture
+                  videoConstraints={VIDEO_CONSTRAINTS}
+                  onUserMedia={handleUserMedia}
+                  onUserMediaError={handleUserMediaError}
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
-                LIVE
-              </span>
-            )}
-
-            {isCapturing && (
-              <span className="absolute right-16 top-4 z-10 rounded-md border-3 border-ink bg-pop-yellow px-3 py-0.5 font-display text-lg tracking-wider text-ink shadow-brutal-sm">
-                {isSelectiveRetake
-                  ? `RETAKING #${retakeIndex + 1}`
-                  : `SHOT ${Math.min(currentShot + 1, frameCount)} / ${frameCount}`}
-              </span>
-            )}
-
-            {/* Large bold countdown overlay */}
-            <div
-              aria-live="assertive"
-              className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
-            >
-              <AnimatePresence mode="popLayout">
-                {countdown !== null && (
-                  <motion.span
-                    key={`shot-${currentShot}-sec-${countdown}`}
-                    initial={{ scale: 2.2, opacity: 0, rotate: -18 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0.4, opacity: 0, rotate: 18 }}
-                    transition={{ type: 'spring', stiffness: 420, damping: 16 }}
-                    className="font-display text-[9rem] leading-none text-pop-yellow text-outline text-shadow-brutal md:text-[13rem]"
-                  >
-                    {countdown}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              )}
+              {VIEWFINDER_CORNERS.map((position) => (
+                <span key={position} aria-hidden="true" className={`camera-crop-mark ${position}`} />
+              ))}
+              {status === 'ready' && <span className="camera-live-badge"><span className="camera-indicator is-ready" /> LIVE</span>}
+              {isCapturing && (
+                <span className="camera-shot-badge">
+                  {isSelectiveRetake ? `RETAKING #${retakeIndex + 1}` : `SHOT ${Math.min(currentShot + 1, frameCount)} / ${frameCount}`}
+                </span>
+              )}
+              <div aria-live="assertive" className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
+                <AnimatePresence mode="popLayout">
+                  {countdown !== null && (
+                    <motion.span
+                      key={`shot-${currentShot}-sec-${countdown}`}
+                      initial={{ scale: 1.3, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.7, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+                      className="camera-countdown font-display text-butter text-outline"
+                    >{countdown}</motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+              {flashKey > 0 && (
+                <motion.div key={`viewfinder-flash-${flashKey}`} aria-hidden="true" className="pointer-events-none absolute inset-0 z-30 bg-cream" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: 0.45 }} />
+              )}
+              {status !== 'ready' && (
+                <div className="camera-message" role={status === 'error' ? 'alert' : 'status'}>
+                  {status === 'pending' ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" /> : <CameraOff aria-hidden="true" />}
+                  <h2>{status === 'pending' ? 'Warming up the camera…' : status === 'error' ? 'A little camera hiccup' : 'Camera unavailable'}</h2>
+                  <p>{status === 'pending' ? 'Allow camera access when your browser asks. Your seat is waiting!' : status === 'error' ? cameraError : 'Open Catabooth over HTTPS or localhost in a browser with camera support.'}</p>
+                  {status === 'error' && <BrutalButton size="sm" color="butter" icon={RefreshCw} onClick={retryCamera}>Try Again</BrutalButton>}
+                </div>
+              )}
             </div>
-
-            {/* White screen flash animation inside viewfinder */}
-            {flashKey > 0 && (
-              <motion.div
-                key={`viewfinder-flash-${flashKey}`}
-                aria-hidden
-                className="pointer-events-none absolute inset-0 z-30 bg-white"
-                initial={{ opacity: 1 }}
-                animate={{ opacity: 0 }}
-                transition={{ duration: 0.45, ease: 'easeOut' }}
-              />
-            )}
-
-            {/* Camera loading / error overlays */}
-            {status === 'pending' && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
-                  <LoaderCircle className="mx-auto mb-3 h-12 w-12 animate-spin" strokeWidth={2.5} />
-                  <h2 className="font-display text-3xl tracking-wide">Warming Up Camera…</h2>
-                  <p className="mt-2 text-sm font-bold">
-                    Please allow camera access when your browser prompts you.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {status === 'error' && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
-                  <CameraOff className="mx-auto mb-3 h-12 w-12 text-pop-magenta" strokeWidth={2.5} />
-                  <h2 className="font-display text-3xl tracking-wide">Camera Blocked!</h2>
-                  <p className="mt-2 text-sm font-bold">{cameraError}</p>
-                  <button
-                    type="button"
-                    onClick={retryCamera}
-                    className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl border-4 border-ink bg-pop-yellow px-4 py-2 font-display text-xl tracking-wider shadow-brutal-sm transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none"
-                  >
-                    <RefreshCw className="h-5 w-5" strokeWidth={3} />
-                    Try Again
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {status === 'unsupported' && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
-                  <CameraOff className="mx-auto mb-3 h-12 w-12 text-pop-magenta" strokeWidth={2.5} />
-                  <h2 className="font-display text-3xl tracking-wide">Camera Unavailable</h2>
-                  <p className="mt-2 text-sm font-bold">
-                    This browser cannot access a camera here. Open the app over HTTPS or localhost.
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
-
-          {captureError && (
-            <p
-              role="alert"
-              className="mx-auto flex max-w-3xl items-center gap-2 rounded-xl border-4 border-ink bg-white px-4 py-2.5 text-sm font-bold shadow-brutal-sm"
-            >
-              <TriangleAlert className="h-5 w-5 shrink-0 text-pop-magenta" strokeWidth={3} />
-              {captureError}
-            </p>
-          )}
-
-          {/* Controls Bar */}
-          <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-center gap-4 sm:justify-between">
-            {/* Mirror-image toggle button */}
-            <button
-              type="button"
-              onClick={() => setMirrored((m) => !m)}
-              aria-pressed={mirrored}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border-4 border-ink bg-white px-4 py-2.5 font-bold uppercase tracking-wider shadow-brutal-sm outline-none transition-transform focus-visible:ring-4 focus-visible:ring-pop-yellow active:translate-x-1 active:translate-y-1 active:shadow-none"
-            >
-              <ArrowLeftRight className="h-5 w-5" strokeWidth={3} />
-              Mirror: {mirrored ? 'ON' : 'OFF'}
-              <span
-                className={`relative h-7 w-12 rounded-full border-3 border-ink transition-colors ${
-                  mirrored ? 'bg-pop-green' : 'bg-paper'
-                }`}
-              >
-                <motion.span
-                  className="absolute top-[3px] h-4 w-4 rounded-full border-3 border-ink bg-white"
-                  animate={{ left: mirrored ? 22 : 2 }}
-                  transition={{ type: 'spring', stiffness: 600, damping: 30 }}
-                />
-              </span>
+          {captureError && <p role="alert" className="camera-error"><TriangleAlert size={18} aria-hidden="true" /> {captureError}</p>}
+          <div className="camera-controls">
+            <button type="button" className="camera-mirror" onClick={() => setMirrored((value) => !value)} aria-pressed={mirrored}>
+              <ArrowLeftRight size={18} aria-hidden="true" /> Mirror: {mirrored ? 'ON' : 'OFF'}
+              <span className={mirrored ? 'bg-mint' : 'bg-sand'} aria-hidden="true"><span style={{ transform: mirrored ? 'translateX(14px)' : 'translateX(0)' }} /></span>
             </button>
-
-            {/* START CAPTURE button — hidden once capture starts */}
             {!isCapturing ? (
-              <motion.button
-                type="button"
-                onClick={startCapture}
-                disabled={status !== 'ready'}
-                className="flex cursor-pointer items-center gap-3 rounded-2xl border-[5px] border-ink bg-pop-yellow px-7 py-3.5 font-display text-3xl tracking-wider text-ink outline-none focus-visible:ring-4 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50 md:px-10 md:text-4xl"
-                initial={{ boxShadow: `8px 8px 0px 0px ${INK}` }}
-                animate={{ x: 0, y: 0, boxShadow: `8px 8px 0px 0px ${INK}` }}
-                whileHover={
-                  status === 'ready'
-                    ? { x: -2, y: -2, boxShadow: `10px 10px 0px 0px ${INK}` }
-                    : undefined
-                }
-                whileTap={
-                  status === 'ready'
-                    ? { x: 8, y: 8, boxShadow: `0px 0px 0px 0px ${INK}` }
-                    : undefined
-                }
-                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-              >
-                <Camera className="h-7 w-7 md:h-8 md:w-8" strokeWidth={3} />
+              <BrutalButton color="rose" icon={Camera} onClick={startCapture} disabled={status !== 'ready'}>
                 {isSelectiveRetake ? `RETAKE SHOT #${retakeIndex + 1}` : 'START CAPTURE'}
-              </motion.button>
+              </BrutalButton>
             ) : (
-              <div className="flex items-center gap-2 rounded-xl border-4 border-ink bg-pop-cyan px-5 py-2.5 font-display text-2xl tracking-wider text-ink shadow-brutal-sm">
-                <motion.span
-                  className="h-3.5 w-3.5 rounded-full border-2 border-ink bg-pop-magenta"
-                  animate={{ scale: [1, 1.35, 1] }}
-                  transition={{ duration: 0.7, repeat: Infinity }}
-                />
-                {isSelectiveRetake
-                  ? `RETAKING SHOT #${retakeIndex + 1}...`
-                  : `SAY CHEESE! (${capturedPhotos.length}/${frameCount})`}
+              <div role="status" className="camera-capturing">
+                <span className="camera-indicator is-ready" />
+                {isSelectiveRetake ? `RETAKING #${retakeIndex + 1}…` : `SAY CHEESE! (${capturedPhotos.length}/${frameCount})`}
               </div>
             )}
           </div>
         </div>
 
-        {/* Right / Bottom: Visual strip of thumbnail previews */}
-        <aside className="rounded-2xl border-[5px] border-ink bg-white p-4 shadow-brutal-lg">
-          <div className="mb-3 flex items-baseline justify-between border-b-4 border-ink pb-2">
-            <h2 className="font-display text-2xl tracking-wide">Photo Strip</h2>
-            <span className="rounded-md border-2 border-ink bg-pop-yellow px-2 py-0.5 font-display text-lg">
-              {isSelectiveRetake ? `Shot #${retakeIndex + 1}` : `${capturedPhotos.length} / ${frameCount}`}
-            </span>
-          </div>
-
-          <ol className="grid grid-cols-4 gap-3 lg:grid-cols-2">
+        <aside className="camera-photo-strip">
+          <div className="camera-strip-heading"><h2>Your moments</h2><span>{capturedPhotos.length} / {frameCount}</span></div>
+          <ol className="camera-thumbnail-grid" aria-label="Captured photos">
             {Array.from({ length: frameCount }, (_, i) => {
               const photo = capturedPhotos[i]
               const isRetakeTarget = isSelectiveRetake && i === retakeIndex
               const isActiveSlot = isCapturing && ((!photo && i === currentShot) || isRetakeTarget)
-
               return (
-                <li
-                  key={i}
-                  className={`relative aspect-4/3 overflow-hidden rounded-lg border-4 border-ink ${
-                    isRetakeTarget
-                      ? 'ring-4 ring-pop-magenta bg-pop-yellow/50'
-                      : photo
-                        ? 'bg-ink shadow-brutal-sm'
-                        : isActiveSlot
-                          ? 'border-dashed bg-pop-yellow/40'
-                          : 'border-dashed bg-paper'
-                  }`}
-                >
+                <li key={i} className={`camera-thumbnail ${isActiveSlot ? 'is-active' : ''} ${isRetakeTarget ? 'is-retake' : ''}`} aria-current={isActiveSlot ? 'step' : undefined}>
                   {photo ? (
-                    <motion.img
-                      src={photo}
-                      alt={`Captured shot ${i + 1}`}
-                      initial={{ scale: 1.5, opacity: 0, rotate: -6 }}
-                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                      transition={{ type: 'spring', stiffness: 380, damping: 20 }}
-                      className={`h-full w-full object-cover ${isRetakeTarget && isCapturing ? 'opacity-40' : ''}`}
-                    />
-                  ) : (
-                    <motion.span
-                      className="absolute inset-0 flex items-center justify-center font-display text-2xl text-ink/70"
-                      animate={isActiveSlot ? { scale: [1, 1.25, 1] } : { scale: 1 }}
-                      transition={isActiveSlot ? { duration: 0.9, repeat: Infinity } : undefined}
-                    >
-                      #{i + 1}
-                    </motion.span>
-                  )}
-
-                  {isRetakeTarget && (
-                    <span className="absolute bottom-1 left-1 right-1 rounded border-2 border-ink bg-pop-yellow px-1 text-center font-display text-xs tracking-wider text-ink">
-                      RETAKING
-                    </span>
-                  )}
+                    <motion.img src={photo} alt={`Captured shot ${i + 1}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`h-full w-full object-cover ${isRetakeTarget && isCapturing ? 'opacity-40' : ''}`} />
+                  ) : <span><Camera size={18} aria-hidden="true" /><small>#{i + 1}</small></span>}
+                  {isRetakeTarget && <span className="camera-retake-label">RETAKE</span>}
                 </li>
               )
             })}
           </ol>
+          <p className="camera-strip-note"><Heart size={19} aria-hidden="true" /> Little moments,<br />yours to keep.</p>
         </aside>
       </div>
-
-      {/* Full-screen white flash overlay on each capture */}
       {flashKey > 0 && (
-        <motion.div
-          key={`screen-flash-${flashKey}`}
-          aria-hidden
-          className="pointer-events-none fixed inset-0 z-50 bg-white"
-          initial={{ opacity: 0.9 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        />
+        <motion.div key={`screen-flash-${flashKey}`} aria-hidden="true" className="pointer-events-none fixed inset-0 z-50 bg-cream" initial={{ opacity: 0.7 }} animate={{ opacity: 0 }} transition={{ duration: 0.4 }} />
       )}
     </section>
   )

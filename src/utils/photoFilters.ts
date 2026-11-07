@@ -77,22 +77,28 @@ export async function bakeFilteredPhotos(
  * data URLs provide the exact pixel blocks.
  */
 export function useBakedPhotos(photos: readonly PhotoDataUrl[], filter: FilterId) {
-  const [baked, setBaked] = useState<PhotoDataUrl[] | null>(null)
+  const [baked, setBaked] = useState<{
+    source: readonly PhotoDataUrl[]
+    filter: FilterId
+    photos: PhotoDataUrl[]
+  } | null>(null)
 
   useEffect(() => {
     let cancelled = false
     bakeFilteredPhotos(photos, filter)
       .then((res) => {
-        if (!cancelled) setBaked(res)
+        if (!cancelled) setBaked({ source: photos, filter, photos: res })
       })
       .catch(() => {
-        if (!cancelled) setBaked([...photos])
+        if (!cancelled) setBaked(null)
       })
     return () => {
       cancelled = true
     }
   }, [photos, filter])
 
-  return baked
+  // A new selection can render before its async bake finishes. Show that
+  // selection's CSS preview instead of pixels from the previous filter.
+  return baked?.source === photos && baked.filter === filter ? baked.photos : null
 }
 

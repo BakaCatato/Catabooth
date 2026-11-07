@@ -8,6 +8,7 @@ import {
   type LayoutId,
   type PhotoDataUrl,
   type Screen,
+  type StickerPackId,
 } from '../types/photobooth'
 
 /* ------------------------------------------------------------------ */
@@ -23,6 +24,7 @@ export interface BoothState {
   layout: LayoutId
   filter: FilterId
   frameDesign: FrameDesignId
+  stickerPack: StickerPackId
 }
 
 export type BoothAction =
@@ -34,6 +36,7 @@ export type BoothAction =
   | { type: 'SET_LAYOUT'; layout: LayoutId }
   | { type: 'SET_FILTER'; filter: FilterId }
   | { type: 'SET_FRAME_DESIGN'; frameDesign: FrameDesignId }
+  | { type: 'SET_STICKER_PACK'; stickerPack: StickerPackId }
   | { type: 'CONFIRM_DESIGN' }
   | { type: 'RETAKE' }
   | { type: 'BACK' }
@@ -47,7 +50,8 @@ export const INITIAL_STATE: BoothState = {
   retakeIndex: null,
   layout: 'vertical-strip',
   filter: 'original',
-  frameDesign: 'classic-white',
+  frameDesign: 'cream',
+  stickerPack: 'cats',
 }
 
 const PREVIOUS_SCREEN: Record<Screen, Screen> = {
@@ -158,6 +162,7 @@ const ACTION_HANDLERS: ActionHandlerMap = {
   SET_LAYOUT: (state, action) => handleSetLayout(state, action.layout),
   SET_FILTER: (state, action) => ({ ...state, filter: action.filter }),
   SET_FRAME_DESIGN: (state, action) => ({ ...state, frameDesign: action.frameDesign }),
+  SET_STICKER_PACK: (state, action) => ({ ...state, stickerPack: action.stickerPack }),
   CONFIRM_DESIGN: (state) => handleConfirmDesign(state),
   RETAKE: (state) => ({ ...state, photos: [], retakeIndex: null, screen: 'camera' }),
   BACK: (state) => handleBack(state),

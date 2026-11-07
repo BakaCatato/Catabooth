@@ -13,7 +13,7 @@ interface TokenDispenserProps {
   onInserted: () => void
 }
 
-interface CoinFlight { x: number; y: number; toX: number; toY: number }
+interface CoinFlight { x: number; y: number; toX: number; toY: number; size: number }
 
 export default function TokenDispenser({ tokenStep, reducedMotion, onDispense, onInsertSound, onInserted }: TokenDispenserProps) {
   const tokenRef = useRef<HTMLButtonElement>(null)
@@ -42,10 +42,11 @@ export default function TokenDispenser({ tokenStep, reducedMotion, onDispense, o
     if (!ready || insertingRef.current || !tokenRef.current || !slotRef.current) return
     insertingRef.current = true
     const coin = tokenRef.current.getBoundingClientRect()
+    const size = tokenRef.current.offsetWidth
     const slot = slotRef.current.getBoundingClientRect()
     onInsertSound()
     setOverSlot(false)
-    setFlight({ x: coin.left, y: coin.top, toX: slot.left + slot.width / 2 - 30, toY: slot.top + slot.height / 2 - 30 })
+    setFlight({ x: coin.left, y: coin.top, toX: slot.left + slot.width / 2 - size / 2, toY: slot.top + slot.height / 2 - size / 2, size })
   }
 
   const isOverSlot = ({ point }: PanInfo) => {
@@ -129,6 +130,7 @@ export default function TokenDispenser({ tokenStep, reducedMotion, onDispense, o
       {flight && createPortal(
         <motion.div
           className="booth-golden-token booth-token-flight"
+          style={{ width: flight.size, height: flight.size }}
           aria-hidden="true"
           initial={{ x: flight.x, y: flight.y, scaleX: 1, opacity: 1 }}
           animate={{ x: flight.toX, y: flight.toY, scaleX: 0.08, opacity: [1, 1, 0] }}

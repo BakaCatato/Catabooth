@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer } from 'react'
 import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-motion'
 
 import MallArcadeBackground from './components/ui/MallArcadeBackground'
+import './screens/BoothScreens.css'
 import Home from './screens/Home'
 import FrameSelection from './screens/FrameSelection'
 import CameraScreen from './screens/CameraScreen'
@@ -16,6 +17,7 @@ import type {
   LayoutId,
   PhotoDataUrl,
   Screen,
+  StickerPackId,
 } from './types/photobooth'
 
 /* ------------------------------------------------------------------ */
@@ -52,7 +54,7 @@ const screenVariants: Variants = {
 
 export default function App() {
   const [state, dispatch] = useReducer(boothReducer, INITIAL_STATE)
-  const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign } = state
+  const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign, stickerPack } = state
 
   // `dispatch` is stable, so these handlers never change identity
   const actions = useMemo(
@@ -67,6 +69,8 @@ export default function App() {
       setFilter: (id: FilterId) => dispatch({ type: 'SET_FILTER', filter: id }),
       setFrameDesign: (design: FrameDesignId) =>
         dispatch({ type: 'SET_FRAME_DESIGN', frameDesign: design }),
+      setStickerPack: (pack: StickerPackId) =>
+        dispatch({ type: 'SET_STICKER_PACK', stickerPack: pack }),
       confirmDesign: () => dispatch({ type: 'CONFIRM_DESIGN' }),
       retake: () => dispatch({ type: 'RETAKE' }),
       back: () => dispatch({ type: 'BACK' }),
@@ -121,9 +125,11 @@ export default function App() {
             layout={layout}
             filter={filter}
             frameDesign={frameDesign}
+            stickerPack={stickerPack}
             onLayoutChange={actions.setLayout}
             onFilterChange={actions.setFilter}
             onFrameDesignChange={actions.setFrameDesign}
+            onStickerPackChange={actions.setStickerPack}
             onRetakeSingle={actions.retakeSingle}
             onConfirm={actions.confirmDesign}
             onRetake={actions.retake}
@@ -138,6 +144,7 @@ export default function App() {
             layout={layout}
             filter={filter}
             frameDesign={frameDesign}
+            stickerPack={stickerPack}
             onBack={actions.back}
             onRestart={actions.restart}
           />
@@ -152,7 +159,7 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative isolate min-h-dvh overflow-x-hidden font-body text-ink">
+      <div className="app-shell relative isolate min-h-dvh overflow-x-hidden overflow-y-auto font-body text-ink md:h-dvh md:max-h-dvh md:overflow-hidden">
         {/* One continuous mall scene behind every screen. */}
         <motion.div
           aria-hidden
@@ -171,7 +178,8 @@ export default function App() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="mall-content min-h-dvh origin-center"
+            className="mall-content min-h-dvh origin-center md:h-dvh md:max-h-dvh md:overflow-hidden"
+            data-screen={screen}
           >
             {renderScreen()}
           </motion.main>

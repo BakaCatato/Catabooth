@@ -41,11 +41,12 @@ export const getDefaultLayout = (count: FrameCount): LayoutId =>
 /*  Frame Designs                                                      */
 /* ------------------------------------------------------------------ */
 
-export type FrameDesignId = 'classic-white' | 'cute-bear' | 'y2k-cyber' | 'dark-mode'
+export type FrameDesignId = 'cream' | 'pink' | 'green' | 'blue' | 'yellow' | 'purple' | 'maroon' | 'dark'
 
 export interface FrameDesignOption {
   id: FrameDesignId
   label: string
+  shortLabel: string
   stripBg: string
   stripBorder: string
   headerBg: string
@@ -56,76 +57,75 @@ export interface FrameDesignOption {
   footerText: string
   cellBorder: string
   cellColors: readonly string[]
-  /** Optional decorative motif label in header */
-  motif?: string
 }
 
+function stripColor(
+  id: FrameDesignId,
+  label: string,
+  shortLabel: string,
+  stripBg: string,
+  headerBg: string,
+  dark = false,
+): FrameDesignOption {
+  return {
+    id, label, shortLabel, stripBg, headerBg,
+    stripBorder: '3px solid #2a211d',
+    headerText: '#2a211d',
+    headerShadow: '1px 1px 0 #fffaf1',
+    badgeBg: '#fffaf1',
+    badgeText: '#2a211d',
+    footerText: dark ? '#fffaf1' : '#2a211d',
+    cellBorder: '2px solid #2a211d',
+    cellColors: ['#f9efe2', '#f3d3d9', '#dcebe1', '#f7e8b8'],
+  }
+}
+
+/** Export artwork uses hex colors so html2canvas never encounters CSS color functions. */
 export const FRAME_DESIGNS: Record<FrameDesignId, FrameDesignOption> = {
-  'classic-white': {
-    id: 'classic-white',
-    label: 'Classic White',
-    stripBg: '#ffffff',
-    stripBorder: '6px solid #0a0a0a',
-    headerBg: '#ff2bd6',
-    headerText: '#ffffff',
-    headerShadow: '3px 3px 0 #0a0a0a',
-    badgeBg: '#ffe600',
-    badgeText: '#0a0a0a',
-    footerText: '#0a0a0a',
-    cellBorder: '4px solid #0a0a0a',
-    cellColors: ['#00e5ff', '#ffe600', '#39ff14', '#ff2bd6'],
-  },
-  'cute-bear': {
-    id: 'cute-bear',
-    label: 'Cute Bear (Brown/Pink accents)',
-    stripBg: '#fce4ec',
-    stripBorder: '6px solid #5d4037',
-    headerBg: '#8d6e63',
-    headerText: '#fff8e7',
-    headerShadow: '3px 3px 0 #3e2723',
-    badgeBg: '#f48fb1',
-    badgeText: '#3e2723',
-    footerText: '#4e342e',
-    cellBorder: '4px solid #5d4037',
-    cellColors: ['#f8bbd0', '#d7ccc8', '#ffe0b2', '#f48fb1'],
-    motif: 'ʕ•ᴥ•ʔ',
-  },
-  'y2k-cyber': {
-    id: 'y2k-cyber',
-    label: 'Y2K Cyber (Neon Green/Black)',
-    stripBg: '#0a0a0a',
-    stripBorder: '6px solid #39ff14',
-    headerBg: '#39ff14',
-    headerText: '#0a0a0a',
-    headerShadow: '2px 2px 0 #ffffff',
-    badgeBg: '#00e5ff',
-    badgeText: '#0a0a0a',
-    footerText: '#39ff14',
-    cellBorder: '4px solid #39ff14',
-    cellColors: ['#39ff14', '#00e5ff', '#ff2bd6', '#ffe600'],
-    motif: '✦ Y2K 2000 ✦',
-  },
-  'dark-mode': {
-    id: 'dark-mode',
-    label: 'Dark Mode',
-    stripBg: '#18181b',
-    stripBorder: '6px solid #0a0a0a',
-    headerBg: '#27272a',
-    headerText: '#ffe600',
-    headerShadow: '3px 3px 0 #0a0a0a',
-    badgeBg: '#ff2bd6',
-    badgeText: '#ffffff',
-    footerText: '#e4e4e7',
-    cellBorder: '4px solid #3f3f46',
-    cellColors: ['#27272a', '#3f3f46', '#27272a', '#3f3f46'],
-  },
+  cream: stripColor('cream', 'Warm Cream', 'Cream', '#fffaf1', '#f7d97e'),
+  pink: stripColor('pink', 'Soft Pastel Pink', 'Pink', '#f6ccd6', '#f3a6b8'),
+  green: stripColor('green', 'Matcha Green', 'Green', '#c9dfbf', '#b1ca9e'),
+  blue: stripColor('blue', 'Baby Blue', 'Blue', '#cce2f0', '#adcde3'),
+  yellow: stripColor('yellow', 'Butter Yellow', 'Yellow', '#f8e6a7', '#f7d97e'),
+  purple: stripColor('purple', 'Lavender', 'Purple', '#dfd2ed', '#c9b6e0'),
+  maroon: stripColor('maroon', 'Retro Maroon', 'Maroon', '#784251', '#f0bfcc', true),
+  dark: stripColor('dark', 'Cozy Espresso / Ink', 'Dark', '#382c28', '#d9c5b3', true),
 }
 
 export const FRAME_DESIGN_ORDER: readonly FrameDesignId[] = [
-  'classic-white',
-  'cute-bear',
-  'y2k-cyber',
-  'dark-mode',
+  'cream', 'pink', 'green', 'blue', 'yellow', 'purple', 'maroon', 'dark',
+]
+
+/* ------------------------------------------------------------------ */
+/*  Sticker packs                                                      */
+/* ------------------------------------------------------------------ */
+
+export type StickerPackId =
+  | 'none' | 'cats' | 'girlypop' | 'cute' | 'y2k'
+  | 'shinchan' | 'matcha' | 'cyber' | 'coquette' | 'scribbles'
+
+export interface StickerPackOption {
+  id: StickerPackId
+  label: string
+  description: string
+}
+
+export const STICKER_PACKS: Record<StickerPackId, StickerPackOption> = {
+  none: { id: 'none', label: 'None', description: 'No stickers, just your little moments.' },
+  cats: { id: 'cats', label: 'Cats', description: 'Cozy cats, tiny paws, and sleepy cuddles.' },
+  girlypop: { id: 'girlypop', label: 'Girlypop', description: 'Pink bows, flowing ribbons, and little hearts.' },
+  cute: { id: 'cute', label: 'Cute', description: 'Bear ears, pastel flowers, and rosy cheeks.' },
+  y2k: { id: 'y2k', label: 'Y2K', description: 'Chrome stars, dreamy sparkles, and butterflies.' },
+  shinchan: { id: 'shinchan', label: 'Shinchan', description: 'Quirky doodle brows, action lines, and cheeky stars.' },
+  matcha: { id: 'matcha', label: 'Matcha', description: 'A matcha latte, a warm croissant, and fresh leaves.' },
+  cyber: { id: 'cyber', label: 'Cyber', description: 'Retro pixel hearts, gamepads, and arcade sparks.' },
+  coquette: { id: 'coquette', label: 'Coquette', description: 'Cherry blossoms, pearls, and a little lace bow.' },
+  scribbles: { id: 'scribbles', label: 'Scribbles', description: 'Hand-drawn arrows, crowns, and a cutie note.' },
+}
+
+export const STICKER_PACK_ORDER: readonly StickerPackId[] = [
+  'none', 'cats', 'girlypop', 'cute', 'y2k',
+  'shinchan', 'matcha', 'cyber', 'coquette', 'scribbles',
 ]
 
 /* ------------------------------------------------------------------ */
@@ -225,9 +225,11 @@ export interface CustomizationProps {
   layout: LayoutId
   filter: FilterId
   frameDesign: FrameDesignId
+  stickerPack: StickerPackId
   onLayoutChange: (layout: LayoutId) => void
   onFilterChange: (filter: FilterId) => void
   onFrameDesignChange: (design: FrameDesignId) => void
+  onStickerPackChange: (pack: StickerPackId) => void
   onRetakeSingle: (index: number) => void
   onConfirm: () => void
   onRetake: () => void
@@ -239,6 +241,7 @@ export interface ResultProps {
   layout: LayoutId
   filter: FilterId
   frameDesign: FrameDesignId
+  stickerPack: StickerPackId
   onBack: () => void
   onRestart: () => void
 }

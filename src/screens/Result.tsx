@@ -1,411 +1,296 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import {
-  ArrowLeft,
-  CircleCheck,
-  Download,
-  LoaderCircle,
-  Mail,
-  RotateCcw,
-  Send,
-  TriangleAlert,
-} from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { Check, Download, Heart, Mail, Printer, RotateCcw, Send, Sparkles, TriangleAlert } from 'lucide-react'
 
 import PhotoStrip from '../components/PhotoStrip'
+import BrutalButton from '../components/ui/BrutalButton'
+import ScreenHeader from '../components/ui/ScreenHeader'
 import { FILTERS, FRAME_DESIGNS, type ResultProps } from '../types/photobooth'
+import { usePreviewScale } from '../hooks/usePreviewScale'
 import { bakeFilteredPhotos, useBakedPhotos } from '../utils/photoFilters'
+import './Result.css'
 
-/* ------------------------------------------------------------------ */
-/*  Config                                                             */
-/* ------------------------------------------------------------------ */
-
-const INK = '#0a0a0a'
 const PRINT_DURATION_SEC = 2.8
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const formatDateStr = () => new Date().toLocaleDateString('en-US', {
+  month: 'short', day: '2-digit', year: 'numeric',
+}).toUpperCase()
 
-const formatDateStr = () =>
-  new Date()
-    .toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-    .toUpperCase()
+function CurlyArrow() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 115 92" fill="none" className="scrapbook-arrow">
+      <path d="M9 9c35-9 75 1 71 26-3 20-40 16-35-1 5-16 35-8 39 10 3 15-5 27-19 34m1-17-4 20 20-4" stroke="#2a211d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m97 16 4-6m1 20 8 1" stroke="#b27b87" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  )
+}
 
-/* ------------------------------------------------------------------ */
-/*  Result screen                                                      */
-/* ------------------------------------------------------------------ */
+function ScissorsDoodle() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 120 105" className="scrapbook-scissors" fill="none">
+      <path d="m48 57 56-42c5 16-13 37-43 53L48 57Z" fill="#d8e7df" stroke="#2a211d" strokeWidth="3" strokeLinejoin="round" />
+      <path d="m48 63 31-56c15 14 6 37-18 62L48 63Z" fill="#fffaf1" stroke="#2a211d" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M42 60C19 39 2 62 17 76c12 12 29 2 31-9m1-1c-8 10-10 28 3 31 20 5 24-23 10-30" fill="#f3a6b8" stroke="#2a211d" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="30" cy="66" rx="9" ry="7" transform="rotate(27 30 66)" fill="#fffaf1" stroke="#2a211d" strokeWidth="2" />
+      <ellipse cx="54" cy="83" rx="6" ry="9" transform="rotate(19 54 83)" fill="#fffaf1" stroke="#2a211d" strokeWidth="2" />
+      <circle cx="56" cy="61" r="4" fill="#f7d97e" stroke="#2a211d" strokeWidth="2" />
+      <path d="m6 29 9 3m4-15 4 7m87 57-9-3" stroke="#2a211d" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 export default function Result({
-  boothMode,
-  photos,
-  layout,
-  filter,
-  frameDesign,
-  onBack,
-  onRestart,
+  boothMode, photos, layout, filter, frameDesign, stickerPack = 'cats', onBack, onRestart,
 }: ResultProps) {
+  const reducedMotion = useReducedMotion()
   const [dateStr] = useState(formatDateStr)
   const [isPrinting, setIsPrinting] = useState(true)
-
-  const stripExportRef = useRef<HTMLDivElement>(null)
-  const bakedPhotos = useBakedPhotos(photos, filter)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-
+  const [printState, setPrintState] = useState<'idle' | 'preparing' | 'error'>('idle')
+  const [emailOpen, setEmailOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [emailFeedback, setEmailFeedback] = useState('')
-
+  const [emailError, setEmailError] = useState(false)
+  const emailInputRef = useRef<HTMLInputElement>(null)
+  const stripExportRef = useRef<HTMLDivElement>(null)
+  const exportInProgress = useRef(false)
+  const printSheetRef = useRef<HTMLDivElement | null>(null)
+  const mountedRef = useRef(true)
+  const { viewportRef, contentRef, scale: previewScale, height: previewHeight } = usePreviewScale()
+  const bakedPhotos = useBakedPhotos(photos, filter)
   const stripWidth = layout === '2-column-grid' ? 420 : 280
   const design = FRAME_DESIGNS[frameDesign]
+  const busy = saveState === 'saving' || printState === 'preparing'
 
-  // Fallback timer in case reduced motion skips the animation callback
   useEffect(() => {
     if (!isPrinting) return
-    const timer = setTimeout(() => setIsPrinting(false), (PRINT_DURATION_SEC + 0.5) * 1000)
+    const timer = setTimeout(() => setIsPrinting(false), reducedMotion ? 100 : (PRINT_DURATION_SEC + 0.5) * 1000)
     return () => clearTimeout(timer)
-  }, [isPrinting])
+  }, [isPrinting, reducedMotion])
 
-  const handleSaveToGallery = async () => {
+  useEffect(() => {
+    if (emailOpen) emailInputRef.current?.focus()
+  }, [emailOpen])
+
+  useEffect(() => {
+    mountedRef.current = true
+    const finishPrint = () => {
+      if (!printSheetRef.current) return
+      printSheetRef.current.remove()
+      printSheetRef.current = null
+      exportInProgress.current = false
+      setPrintState('idle')
+    }
+    window.addEventListener('afterprint', finishPrint)
+    return () => {
+      mountedRef.current = false
+      window.removeEventListener('afterprint', finishPrint)
+      printSheetRef.current?.remove()
+      printSheetRef.current = null
+      exportInProgress.current = false
+    }
+  }, [])
+
+  /** Export only the full-size strip. Scrapbook rotation and decorations stay on screen. */
+  const createStripImage = async () => {
     const node = stripExportRef.current
-    if (!node || saveState === 'saving') return
+    if (!node) throw new Error('The photo strip is not ready yet.')
+    const width = node.offsetWidth
+    const height = node.offsetHeight
+    const [filteredPhotos, { default: html2canvas }] = await Promise.all([
+      bakeFilteredPhotos(photos, filter),
+      import('html2canvas'),
+      document.fonts?.ready,
+    ])
+    const canvas = await html2canvas(node, {
+      useCORS: true,
+      backgroundColor: design.stripBg,
+      scale: Math.max(2, window.devicePixelRatio || 1),
+      width,
+      height,
+      logging: false,
+      onclone: async (_, strip) => {
+        // Every ancestor can carry a preview transform (scale, tilt or print motion).
+        let ancestor: HTMLElement | null = strip
+        while (ancestor) {
+          ancestor.style.transform = 'none'
+          ancestor.style.overflow = 'visible'
+          ancestor = ancestor.parentElement
+        }
+        Object.assign(strip.style, { position: 'fixed', left: '0', top: '0', width: `${width}px`, margin: '0' })
+        await Promise.all(Array.from(strip.querySelectorAll('img')).map(async (image, index) => {
+          image.src = filteredPhotos[index] ?? image.src
+          image.style.filter = 'none'
+          await image.decode()
+        }))
+      },
+    })
+    return canvas.toDataURL('image/png')
+  }
 
+  const handleDownload = async () => {
+    if (exportInProgress.current) return
+    exportInProgress.current = true
     setSaveState('saving')
     try {
-      if (!bakedPhotos) {
-        await bakeFilteredPhotos(photos, filter)
-      }
-
-      const [{ default: html2canvas }] = await Promise.all([
-        import('html2canvas'),
-        document.fonts?.ready,
-      ])
-
-      const canvas = await html2canvas(node, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: design.stripBg,
-        scale: Math.max(2, window.devicePixelRatio || 1),
-        logging: false,
-      })
-
-      const dataUrl = canvas.toDataURL('image/png')
       const link = document.createElement('a')
       link.download = `catabooth-${Date.now()}.png`
-      link.href = dataUrl
+      link.href = await createStripImage()
       document.body.appendChild(link)
       link.click()
       link.remove()
-
       setSaveState('saved')
-    } catch (err) {
-      console.error('[photobooth] Failed to export photo strip', err)
+    } catch (error) {
+      console.error('[catabooth] Could not download the photo strip', error)
       setSaveState('error')
+    } finally {
+      exportInProgress.current = false
     }
   }
 
-  const handleSendEmail = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = email.trim()
-    if (!EMAIL_PATTERN.test(trimmed)) {
-      setEmailState('error')
-      setEmailFeedback('Please enter a valid email address!')
+  const handlePrint = async () => {
+    if (exportInProgress.current) return
+    exportInProgress.current = true
+    setPrintState('preparing')
+    const sheet = document.createElement('div')
+    sheet.className = 'catabooth-print-sheet'
+    try {
+      const image = new Image()
+      image.alt = 'Your Catabooth photo strip'
+      image.src = await createStripImage()
+      await image.decode()
+      if (!mountedRef.current) {
+        exportInProgress.current = false
+        return
+      }
+      sheet.appendChild(image)
+      printSheetRef.current = sheet
+      document.body.appendChild(sheet)
+      // Some browsers return before their print dialog has captured the page.
+      // Retain the sheet and export lock until afterprint (including cancellation).
+      window.print()
+    } catch (error) {
+      console.error('[catabooth] Could not prepare the photo strip for printing', error)
+      sheet.remove()
+      if (printSheetRef.current === sheet) printSheetRef.current = null
+      exportInProgress.current = false
+      if (mountedRef.current) setPrintState('error')
+    }
+  }
+
+  const handleEmail = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const address = email.trim()
+    if (!EMAIL_PATTERN.test(address)) {
+      setEmailError(true)
+      setEmailFeedback('Add a valid email address to open your draft.')
+      emailInputRef.current?.focus()
       return
     }
-
-    setEmailState('sending')
-    setEmailFeedback('')
-
-    // Simulate a 2-second loading state (will connect to Hono backend next)
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000))
-
-    setEmailState('sent')
-    setEmailFeedback(`Boom! Strip sent to ${trimmed}!`)
+    const subject = encodeURIComponent('A little Catabooth keepsake for you')
+    const body = encodeURIComponent('Here is my Catabooth photo strip!\n\nAttach the downloaded Catabooth PNG before sending this email.')
+    const link = document.createElement('a')
+    link.href = `mailto:${encodeURIComponent(address)}?subject=${subject}&body=${body}`
+    link.click()
+    setEmailError(false)
+    setEmailFeedback('Email draft requested. Attach your downloaded PNG in your mail app, then send it there.')
   }
 
   return (
-    <section className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-4 py-6 md:py-10">
-      {/* ---------- Header ---------- */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <motion.button
-            type="button"
-            onClick={onBack}
-            aria-label="Go back to Customize"
-            whileHover={{ rotate: -8, scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
-            className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border-4 border-ink bg-white shadow-brutal-sm outline-none focus-visible:ring-4 focus-visible:ring-pop-yellow"
-          >
-            <ArrowLeft className="h-6 w-6" strokeWidth={3} />
-          </motion.button>
+    <section className="app-screen result-screen">
+      <ScreenHeader
+        title={isPrinting ? 'Printing a little happiness…' : 'A little keepsake!'}
+        subtitle={`${photos.length} photos · ${FILTERS[filter].label} · ${design.label}`}
+        onBack={onBack}
+      />
 
-          <div>
-            <h1 className="font-display text-4xl leading-none tracking-wide text-white text-outline [text-shadow:4px_4px_0_#0a0a0a] sm:text-5xl md:text-6xl">
-              {isPrinting ? 'Printing Strip…' : 'Your Strip!'}
-            </h1>
-            <p className="mt-1.5 inline-block -rotate-1 rounded-md border-3 border-ink bg-white px-2.5 py-0.5 text-xs font-bold uppercase tracking-widest md:text-sm">
-              {photos.length} Photos · {FILTERS[filter].label} · {design.label}
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {/* ---------- Main Booth Area ---------- */}
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-        {/* Left: Photobooth Dispenser Machine + Sliding Strip */}
-        <div className="mx-auto w-full" style={{ maxWidth: stripWidth + 76 }}>
-          {/* Machine Header & Horizontal Dispenser Slot */}
-          <motion.div
-            className="relative z-20 rounded-3xl border-[6px] border-ink bg-pop-magenta px-4 pb-8 pt-4 shadow-brutal-lg"
-            animate={isPrinting ? { x: [0, -1.5, 1.5, -1, 0] } : { x: 0 }}
-            transition={isPrinting ? { duration: 0.25, repeat: Infinity } : undefined}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-display text-2xl tracking-wider text-white text-outline-sm md:text-3xl">
-                POP-O-MATIC 3000
-              </span>
-
-              <div aria-hidden className="flex gap-1.5">
-                {['bg-pop-yellow', 'bg-pop-green', 'bg-pop-cyan'].map((bg, i) => (
-                  <motion.span
-                    key={bg}
-                    className={`h-4 w-4 rounded-full border-3 border-ink ${bg}`}
-                    animate={isPrinting ? { opacity: [1, 0.25, 1] } : { opacity: 1 }}
-                    transition={
-                      isPrinting ? { duration: 0.6, repeat: Infinity, delay: i * 0.2 } : undefined
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Machine Status Screen */}
-            <div
-              role="status"
-              aria-live="polite"
-              className="mt-3 flex min-h-12 items-center justify-center rounded-xl border-4 border-ink bg-ink px-3 py-2 text-center font-display text-xl tracking-widest md:text-2xl"
-            >
+      <div className="scrapbook-layout">
+        <div ref={viewportRef} className="scrapbook-preview" style={{ '--preview-height': `${previewHeight}px` } as CSSProperties}>
+          <div ref={contentRef} className="scrapbook-preview-scale" style={{ width: stripWidth + 120, transform: `translateX(-50%) scale(${previewScale})` }}>
+            <div className="scrapbook-caption-space">
               <AnimatePresence mode="wait" initial={false}>
                 {isPrinting ? (
-                  <motion.span
-                    key="printing"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-pop-yellow"
-                  >
-                    PRINTING YOUR STRIP...
-                  </motion.span>
+                  <motion.div key="dispenser" className="scrapbook-dispenser" initial={false} exit={{ opacity: 0, y: -8 }}>
+                    <span>CATABOOTH KEEPSAKES</span>
+                    <span className="scrapbook-printer-status"><span /> a little magic in progress…</span>
+                    <div className="scrapbook-dispenser-slot" />
+                  </motion.div>
                 ) : (
-                  <motion.span
-                    key="ready"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                    className="text-pop-green"
-                  >
-                    YOUR STRIP IS READY!
-                  </motion.span>
+                  <motion.div key="caption" className="scrapbook-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <span>your photostrip!</span>
+                    <CurlyArrow />
+                    <Heart className="scrapbook-caption-heart" aria-hidden="true" strokeWidth={2} />
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Horizontal Dispenser Slot */}
-            <div
-              aria-hidden
-              className="absolute -bottom-3.5 left-1/2 z-30 h-7 -translate-x-1/2 rounded-full border-4 border-ink bg-ink"
-              style={{ width: `min(calc(100% - 1rem), ${stripWidth + 24}px)` }}
-            >
-              <div className="mx-auto mt-1.5 h-1.5 w-[92%] rounded-full bg-[#3a3a3a]" />
+            <div className="scrapbook-chute" style={{ overflow: isPrinting ? 'hidden' : 'visible' }}>
+              <motion.div
+                className="scrapbook-paper"
+                style={{ width: stripWidth }}
+                initial={{ y: reducedMotion ? 0 : '-100%', opacity: reducedMotion ? 1 : 0 }}
+                animate={{ y: 0, opacity: 1, rotate: isPrinting ? 0 : -3 }}
+                transition={{ y: { duration: reducedMotion ? 0 : PRINT_DURATION_SEC, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: reducedMotion ? 0 : 0.3 }, rotate: { duration: reducedMotion ? 0 : 0.5, ease: 'easeOut' } }}
+                onAnimationComplete={() => setIsPrinting(false)}
+              >
+                <PhotoStrip
+                  ref={stripExportRef}
+                  photos={bakedPhotos ?? photos}
+                  boothMode={boothMode}
+                  layout={layout}
+                  filter={filter}
+                  frameDesign={frameDesign}
+                  stickerPack={stickerPack}
+                  applyCssFilter={!bakedPhotos}
+                  dateStr={dateStr}
+                />
+              </motion.div>
+              {!isPrinting && <ScissorsDoodle />}
             </div>
-          </motion.div>
-
-          {/* Chute clipping container: strip slides down out of the slot */}
-          <div
-            className="relative z-10 mx-auto overflow-hidden px-3 pb-6 pt-1"
-            style={{ width: `min(100%, ${stripWidth + 28}px)` }}
-          >
-            <motion.div
-              initial={{ y: '-100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{
-                duration: PRINT_DURATION_SEC,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              onAnimationComplete={() => setIsPrinting(false)}
-              className="origin-top shadow-brutal-lg"
-            >
-              <PhotoStrip
-                ref={stripExportRef}
-                photos={bakedPhotos ?? photos}
-                boothMode={boothMode}
-                layout={layout}
-                filter={filter}
-                frameDesign={frameDesign}
-                applyCssFilter={!bakedPhotos}
-                dateStr={dateStr}
-              />
-            </motion.div>
+            <p className="scrapbook-paper-note">a tiny moment, yours to keep <span aria-hidden="true">♡</span></p>
           </div>
         </div>
 
-        {/* Right: Save & Email Actions */}
-        <div className="flex flex-col gap-6 lg:sticky lg:top-6">
-          {/* 1. SAVE TO GALLERY Card */}
-          <div className="rounded-2xl border-[5px] border-ink bg-white p-5 shadow-brutal-lg">
-            <h2 className="mb-1 font-display text-3xl tracking-wide">Keep Your Strip!</h2>
-            <p className="mb-4 text-sm font-bold">
-              Export a high-resolution PNG with your chosen filter & frame.
-            </p>
+        <div className="scrapbook-actions">
+          <div className="scrapbook-action-card">
+            <span aria-hidden="true" className="scrapbook-tape" />
+            <span className="scrapbook-ready-note" role="status"><Sparkles aria-hidden="true" size={15} /> {isPrinting ? 'fresh from the booth…' : 'made with a little love'}</span>
+            <h2>Keep the good bits.</h2>
+            <p>A pocket-sized memory for your scrapbook, your wall, or someone you love.</p>
 
-            <motion.button
-              type="button"
-              onClick={handleSaveToGallery}
-              disabled={saveState === 'saving'}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border-[5px] border-ink bg-pop-green px-6 py-3.5 font-display text-3xl tracking-wider text-ink outline-none focus-visible:ring-4 focus-visible:ring-pop-yellow disabled:cursor-not-allowed disabled:opacity-60"
-              initial={{ boxShadow: `8px 8px 0px 0px ${INK}` }}
-              animate={{ x: 0, y: 0, boxShadow: `8px 8px 0px 0px ${INK}` }}
-              whileHover={
-                saveState !== 'saving'
-                  ? { x: -2, y: -2, boxShadow: `10px 10px 0px 0px ${INK}` }
-                  : undefined
-              }
-              whileTap={
-                saveState !== 'saving'
-                  ? { x: 8, y: 8, boxShadow: `0px 0px 0px 0px ${INK}` }
-                  : undefined
-              }
-              transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-            >
-              {saveState === 'saving' ? (
-                <>
-                  <LoaderCircle className="h-7 w-7 animate-spin" strokeWidth={3} />
-                  SAVING...
-                </>
-              ) : saveState === 'saved' ? (
-                <>
-                  <CircleCheck className="h-7 w-7" strokeWidth={3} />
-                  SAVED! SAVE AGAIN
-                </>
-              ) : (
-                <>
-                  <Download className="h-7 w-7" strokeWidth={3} />
-                  SAVE TO GALLERY
-                </>
-              )}
-            </motion.button>
-
-            {saveState === 'error' && (
-              <p
-                role="alert"
-                className="mt-3 flex items-center gap-2 rounded-lg border-3 border-ink bg-paper px-3 py-1.5 text-sm font-bold text-ink"
-              >
-                <TriangleAlert className="h-4 w-4 shrink-0 text-pop-magenta" strokeWidth={3} />
-                Could not export strip. Please try again.
-              </p>
-            )}
-          </div>
-
-          {/* 2. SEND TO EMAIL Card */}
-          <form
-            onSubmit={handleSendEmail}
-            noValidate
-            className="rounded-2xl border-[5px] border-ink bg-pop-yellow p-5 shadow-brutal-lg"
-          >
-            <h2 className="mb-1 flex items-center gap-2 font-display text-3xl tracking-wide">
-              <Mail className="h-7 w-7" strokeWidth={3} />
-              SEND TO EMAIL
-            </h2>
-            <label htmlFor="strip-email" className="mb-3 block text-sm font-bold">
-              Get your digital photo strip delivered straight to your inbox.
-            </label>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <input
-                id="strip-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  if (emailState !== 'sending') {
-                    setEmailState('idle')
-                    setEmailFeedback('')
-                  }
-                }}
-                disabled={emailState === 'sending'}
-                className="min-w-0 flex-1 rounded-xl border-4 border-ink bg-white px-4 py-2.5 text-base font-bold text-ink shadow-brutal-sm outline-none placeholder:text-[#7a7a7a] focus:ring-4 focus:ring-pop-cyan disabled:opacity-60"
-              />
-
-              <motion.button
-                type="submit"
-                disabled={emailState === 'sending' || email.trim() === ''}
-                className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-4 border-ink bg-pop-magenta px-6 py-2.5 font-display text-2xl tracking-wider text-white text-outline-sm outline-none focus-visible:ring-4 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50"
-                initial={{ boxShadow: `6px 6px 0px 0px ${INK}` }}
-                animate={{ x: 0, y: 0, boxShadow: `6px 6px 0px 0px ${INK}` }}
-                whileHover={
-                  emailState !== 'sending' && email.trim() !== ''
-                    ? { x: -2, y: -2, boxShadow: `8px 8px 0px 0px ${INK}` }
-                    : undefined
-                }
-                whileTap={
-                  emailState !== 'sending' && email.trim() !== ''
-                    ? { x: 6, y: 6, boxShadow: `0px 0px 0px 0px ${INK}` }
-                    : undefined
-                }
-                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-              >
-                {emailState === 'sending' ? (
-                  <>
-                    <LoaderCircle className="h-5 w-5 animate-spin" strokeWidth={3} />
-                    SENDING...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5" strokeWidth={3} />
-                    SEND
-                  </>
-                )}
-              </motion.button>
+            <div className="scrapbook-button-grid">
+              <BrutalButton color="mint" icon={saveState === 'saved' ? Check : Download} loading={saveState === 'saving'} disabled={isPrinting || busy} onClick={handleDownload}>
+                {saveState === 'saving' ? 'saving…' : saveState === 'saved' ? 'download again' : 'download'}
+              </BrutalButton>
+              <button type="button" className="scrapbook-email-toggle" aria-expanded={emailOpen} aria-controls="scrapbook-email-drawer" onClick={() => setEmailOpen(!emailOpen)} disabled={isPrinting}>
+                <Mail aria-hidden="true" size={19} /> send to email
+              </button>
+              <BrutalButton color="butter" icon={Printer} loading={printState === 'preparing'} disabled={isPrinting || busy} onClick={handlePrint}>
+                {printState === 'preparing' ? 'preparing…' : 'print'}
+              </BrutalButton>
+              <BrutalButton color="cream" icon={RotateCcw} onClick={onRestart} disabled={busy}>restart</BrutalButton>
             </div>
 
-            <AnimatePresence mode="wait">
-              {(emailState === 'sent' || emailState === 'error') && (
-                <motion.p
-                  key={emailState + emailFeedback}
-                  role={emailState === 'error' ? 'alert' : 'status'}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className={`mt-3 flex items-center gap-2 rounded-xl border-3 border-ink px-3 py-2 text-sm font-bold ${
-                    emailState === 'sent' ? 'bg-pop-green text-ink' : 'bg-white text-ink'
-                  }`}
-                >
-                  {emailState === 'sent' ? (
-                    <CircleCheck className="h-5 w-5 shrink-0" strokeWidth={3} />
-                  ) : (
-                    <TriangleAlert className="h-5 w-5 shrink-0 text-pop-magenta" strokeWidth={3} />
-                  )}
-                  {emailFeedback}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </form>
+            {(saveState === 'error' || printState === 'error') && (
+              <p className="scrapbook-feedback is-error" role="alert"><TriangleAlert aria-hidden="true" size={16} /> We couldn’t prepare your strip. Please try again.</p>
+            )}
 
-          {/* 3. Start Over Button */}
-          <div className="flex justify-center pb-4">
-            <motion.button
-              type="button"
-              onClick={onRestart}
-              className="flex cursor-pointer items-center gap-2.5 rounded-xl border-4 border-ink bg-white px-6 py-2.5 font-display text-2xl tracking-wider text-ink outline-none focus-visible:ring-4 focus-visible:ring-pop-yellow"
-              initial={{ boxShadow: `6px 6px 0px 0px ${INK}` }}
-              animate={{ x: 0, y: 0, boxShadow: `6px 6px 0px 0px ${INK}` }}
-              whileHover={{ x: -2, y: -2, boxShadow: `8px 8px 0px 0px ${INK}` }}
-              whileTap={{ x: 6, y: 6, boxShadow: `0px 0px 0px 0px ${INK}` }}
-              transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-            >
-              <RotateCcw className="h-5 w-5" strokeWidth={3} />
-              START OVER
-            </motion.button>
+            {emailOpen && (
+              <form id="scrapbook-email-drawer" className="scrapbook-email-drawer" onSubmit={handleEmail} noValidate>
+                <label htmlFor="strip-email">A keepsake for your inbox</label>
+                <p>Download your strip first. We’ll open an email draft so you can attach the PNG and send it.</p>
+                <div className="scrapbook-email-fields">
+                  <input ref={emailInputRef} id="strip-email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} aria-invalid={emailError} aria-describedby={emailFeedback ? 'scrapbook-email-feedback' : undefined} onChange={(event) => { setEmail(event.target.value); setEmailFeedback(''); setEmailError(false) }} />
+                  <button type="submit" aria-label="Open email draft"><Send aria-hidden="true" size={18} /></button>
+                </div>
+                {emailFeedback && <p id="scrapbook-email-feedback" className={`scrapbook-feedback${emailError ? ' is-error' : ''}`} role={emailError ? 'alert' : 'status'}>{emailFeedback}</p>}
+              </form>
+            )}
+
+            <span className="scrapbook-file-note">PNG keeps every color, sticker & little detail.</span>
           </div>
+          <div aria-hidden="true" className="scrapbook-end-note"><span>✧</span> see you at the booth again! <span>✧</span></div>
         </div>
       </div>
     </section>

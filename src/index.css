@@ -7,19 +7,24 @@
  * photo strip must come from these tokens (or other hex/rgb values).
  */
 @theme {
-  --color-pop-cyan: #bcd7cf;
-  --color-pop-magenta: #d990a6;
-  --color-pop-yellow: #fff0b5;
-  --color-pop-green: #c4d8b5;
-  --color-ink: #0a0a0a;
-  --color-paper: #fff8e7;
+  --color-rose: #f3a6b8;
+  --color-butter: #f7d97e;
+  --color-mint: #bfe3d0;
+  --color-cream: #fffaf1;
+  --color-sand: #f9efe2;
+  --color-pop-cyan: #bfe3d0;
+  --color-pop-magenta: #f3a6b8;
+  --color-pop-yellow: #f7d97e;
+  --color-pop-green: #bfe3d0;
+  --color-ink: #2a211d;
+  --color-paper: #fffaf1;
 
   --font-display: "Bangers", "Impact", system-ui, sans-serif;
   --font-body: "Space Grotesk", system-ui, sans-serif;
 
-  --shadow-brutal-sm: 4px 4px 0 0 #0a0a0a;
-  --shadow-brutal: 6px 6px 0 0 #0a0a0a;
-  --shadow-brutal-lg: 10px 10px 0 0 #0a0a0a;
+  --shadow-brutal-sm: 3px 3px 0 0 #2a211d;
+  --shadow-brutal: 5px 5px 0 0 #2a211d;
+  --shadow-brutal-lg: 7px 7px 0 0 #2a211d;
 }
 
 /* Comic-book outlined text */
