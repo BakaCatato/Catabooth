@@ -415,7 +415,7 @@ export default function CameraScreen({
             {/* Camera loading / error overlays */}
             {status === 'pending' && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#ffe600]">
+                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
                   <LoaderCircle className="mx-auto mb-3 h-12 w-12 animate-spin" strokeWidth={2.5} />
                   <h2 className="font-display text-3xl tracking-wide">Warming Up Camera…</h2>
                   <p className="mt-2 text-sm font-bold">
@@ -427,7 +427,7 @@ export default function CameraScreen({
 
             {status === 'error' && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#ffe600]">
+                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
                   <CameraOff className="mx-auto mb-3 h-12 w-12 text-pop-magenta" strokeWidth={2.5} />
                   <h2 className="font-display text-3xl tracking-wide">Camera Blocked!</h2>
                   <p className="mt-2 text-sm font-bold">{cameraError}</p>
@@ -445,7 +445,7 @@ export default function CameraScreen({
 
             {status === 'unsupported' && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink p-6">
-                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#ffe600]">
+                <div className="max-w-sm -rotate-1 rounded-2xl border-[5px] border-ink bg-paper p-6 text-center shadow-[8px_8px_0_0_#fff0b5]">
                   <CameraOff className="mx-auto mb-3 h-12 w-12 text-pop-magenta" strokeWidth={2.5} />
                   <h2 className="font-display text-3xl tracking-wide">Camera Unavailable</h2>
                   <p className="mt-2 text-sm font-bold">

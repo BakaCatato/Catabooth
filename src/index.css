@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 /*
- * Retro Pop-Art design tokens.
+ * Cozy pastel doodle tokens. Legacy pop-* names keep shared controls consistent.
  * NOTE: Colors are HEX on purpose — html2canvas cannot parse Tailwind v4's
  * default oklch() palette, so every color that ends up in an exported
  * photo strip must come from these tokens (or other hex/rgb values).
  */
 @theme {
-  --color-pop-cyan: #00e5ff;
-  --color-pop-magenta: #ff2bd6;
-  --color-pop-yellow: #ffe600;
-  --color-pop-green: #39ff14;
+  --color-pop-cyan: #bcd7cf;
+  --color-pop-magenta: #d990a6;
+  --color-pop-yellow: #fff0b5;
+  --color-pop-green: #c4d8b5;
   --color-ink: #0a0a0a;
   --color-paper: #fff8e7;
 

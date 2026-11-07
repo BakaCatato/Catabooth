@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer } from 'react'
 import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-motion'
 
-import HalftoneBackground from './components/ui/HalftoneBackground'
+import MallArcadeBackground from './components/ui/MallArcadeBackground'
 import Home from './screens/Home'
 import FrameSelection from './screens/FrameSelection'
 import CameraScreen from './screens/CameraScreen'
@@ -24,28 +24,24 @@ import type {
 
 /** Backdrop color behind each screen (HEX for html2canvas safety) */
 const SCREEN_BACKDROP: Record<Screen, string> = {
-  home: '#00e5ff',
-  frames: '#ffe600',
-  camera: '#ff2bd6',
-  customize: '#39ff14',
-  result: '#00e5ff',
+  home: '#fbf4eb',
+  frames: '#fbf4eb',
+  camera: '#fbf4eb',
+  customize: '#fbf4eb',
+  result: '#fbf4eb',
 }
 
-/** Comic "panel slam" transition between screens */
+/** A gentle page change within the same illustrated mall corner. */
 const screenVariants: Variants = {
-  initial: { opacity: 0, scale: 0.9, rotate: -2, y: 60 },
+  initial: { opacity: 0, y: 18 },
   animate: {
     opacity: 1,
-    scale: 1,
-    rotate: 0,
     y: 0,
     transition: { type: 'spring', stiffness: 260, damping: 22 },
   },
   exit: {
     opacity: 0,
-    scale: 1.05,
-    rotate: 2,
-    y: -40,
+    y: -12,
     transition: { duration: 0.22, ease: 'easeIn' },
   },
 }
@@ -157,15 +153,15 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="relative isolate min-h-dvh overflow-x-hidden font-body text-ink">
-        {/* Persistent animated backdrop — color morphs per screen */}
+        {/* One continuous mall scene behind every screen. */}
         <motion.div
           aria-hidden
-          className="fixed inset-0 -z-10"
+          className="absolute inset-0 -z-10"
           initial={false}
           animate={{ backgroundColor: SCREEN_BACKDROP[screen] }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
         >
-          <HalftoneBackground dotColor="rgba(10,10,10,0.14)" size={26} dotRadius={3} duration={7} />
+          <MallArcadeBackground />
         </motion.div>
 
         <AnimatePresence mode="wait" initial={false} onExitComplete={() => window.scrollTo(0, 0)}>
@@ -175,7 +171,7 @@ export default function App() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="min-h-dvh origin-center"
+            className="mall-content min-h-dvh origin-center"
           >
             {renderScreen()}
           </motion.main>

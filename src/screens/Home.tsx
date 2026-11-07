@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Camera, Cat, Heart, Sparkles, Star } from 'lucide-react'
 import type { HomeProps } from '../types/photobooth'
+import TokenDispenser, { type TokenStep } from '../components/TokenDispenser'
+import { useBoothSounds } from '../hooks/useBoothSounds'
+import { incrementVisitorCount, readVisitorCount, VISITOR_COUNT_KEY } from '../utils/visitorCounter'
 import './Home.css'
 
 type CurtainState = 'closed' | 'open' | 'closing'
@@ -80,28 +83,6 @@ function FeaturedStrips({ reducedMotion }: { reducedMotion: boolean }) {
   )
 }
 
-function TokenDispenser() {
-  return (
-    <div className="mt-6 flex items-center justify-between gap-3">
-      <div className="booth-token-panel" aria-hidden="true">
-        <span className="font-display text-sm tracking-widest">ONE HAPPY TOKEN</span>
-        <div className="my-3 flex items-center justify-center gap-4">
-          <div className="booth-token"><Star size={20} strokeWidth={2.5} /></div>
-          <div className="booth-coin-slot"><span /></div>
-        </div>
-        <div className="h-4 rounded-sm border-[3px] border-ink bg-[#554848] shadow-[inset_0_4px_0_#0a0a0a]" />
-        <span className="mt-2 block text-[8px] font-bold tracking-[0.13em]">100% FREE · ALWAYS</span>
-      </div>
-      <div className="booth-entrance-note" aria-hidden="true">
-        <span>psst…<br />step inside!</span>
-        <svg viewBox="0 0 100 65" className="mt-1 w-24" fill="none">
-          <path d="M10 9c-9 28 32 44 48 22 9-14-13-23-18-8-7 22 33 27 49 12m-19-3 20 2-6 18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-    </div>
-  )
-}
-
 function BoothInterior() {
   return (
     <div id="booth-interior" className="booth-interior absolute inset-0" aria-hidden="true">
@@ -144,9 +125,39 @@ function CurtainPanel({ side, isOpen, reducedMotion }: { side: 'left' | 'right';
 
 export default function Home({ onStart }: HomeProps) {
   const [curtainState, setCurtainState] = useState<CurtainState>('closed')
+  const [tokenStep, setTokenStep] = useState<TokenStep>('need-token')
+  const [visitorCount, setVisitorCount] = useState(readVisitorCount)
+  const dispensedRef = useRef(false)
+  const startButtonRef = useRef<HTMLButtonElement>(null)
+  const playSound = useBoothSounds()
   const reducedMotion = useReducedMotion() ?? false
   const isOpen = curtainState === 'open'
   const isClosing = curtainState === 'closing'
+
+  const dispenseToken = () => {
+    if (dispensedRef.current) return
+    dispensedRef.current = true
+    setVisitorCount(incrementVisitorCount())
+    playSound('dispense')
+    setTokenStep('token-dispensed')
+  }
+
+  const unlockCurtain = useCallback(() => {
+    setTokenStep('token-inserted')
+    setCurtainState('open')
+  }, [])
+
+  useEffect(() => {
+    const syncCount = (event: StorageEvent) => {
+      if (event.key === VISITOR_COUNT_KEY || event.key === null) setVisitorCount(readVisitorCount())
+    }
+    window.addEventListener('storage', syncCount)
+    return () => window.removeEventListener('storage', syncCount)
+  }, [])
+
+  useEffect(() => {
+    if (isOpen) startButtonRef.current?.focus()
+  }, [isOpen])
 
   useEffect(() => {
     if (curtainState !== 'closing') return
@@ -156,7 +167,7 @@ export default function Home({ onStart }: HomeProps) {
   }, [curtainState, onStart])
 
   return (
-    <section className="booth-home relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-8 text-ink sm:px-8 sm:py-10" aria-labelledby="booth-title">
+    <section className="booth-home relative flex flex-col items-center justify-center px-4 pb-12 pt-4 text-ink sm:px-8 sm:pb-14" aria-labelledby="booth-title">
       <div className="relative mb-6 flex items-center gap-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] sm:text-xs">
         <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
         A little booth. A lot of memories.
@@ -183,20 +194,30 @@ export default function Home({ onStart }: HomeProps) {
           </header>
 
           <div className="grid gap-6 p-4 sm:grid-cols-[0.95fr_1.05fr] sm:gap-7 sm:p-7">
-            <div className="flex min-w-0 flex-col justify-between">
+            <div className="flex min-w-0 flex-col">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <span className="booth-visitor-badge"><Star size={13} aria-hidden="true" /> VISITOR #{String(visitorCount).padStart(4, '0')}</span>
+                <span className="booth-entrance-note" aria-hidden="true">hi, happy human!</span>
+              </div>
               <FeaturedStrips reducedMotion={reducedMotion} />
-              <TokenDispenser />
+              <TokenDispenser
+                tokenStep={tokenStep}
+                reducedMotion={reducedMotion}
+                onDispense={dispenseToken}
+                onInsertSound={() => playSound('insert')}
+                onInserted={unlockCurtain}
+              />
               <div className="mt-5 flex items-center justify-center gap-2 text-center text-[9px] font-bold uppercase tracking-[0.14em]">
                 <Cat size={19} strokeWidth={2.5} aria-hidden="true" />
                 Made for you & your favorite humans
               </div>
             </div>
 
-            <div className="min-w-0">
+            <div className="flex min-w-0 flex-col">
               <div className="mb-3 flex items-center justify-between gap-2 px-1">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em]">
                   <span className={`h-2.5 w-2.5 rounded-full border-2 border-ink ${isClosing ? 'bg-[#e9b8c7]' : 'bg-[#b8d8a0]'}`} aria-hidden="true" />
-                  {isClosing ? 'IN SESSION' : 'BOOTH IS ALL YOURS'}
+                  {isClosing ? 'IN SESSION' : tokenStep === 'token-inserted' ? 'BOOTH IS ALL YOURS' : 'ONE COIN TO BEGIN'}
                 </span>
                 <span className="font-display text-sm tracking-widest">NO. 01</span>
               </div>
@@ -207,22 +228,30 @@ export default function Home({ onStart }: HomeProps) {
                 <CurtainPanel side="left" isOpen={isOpen} reducedMotion={reducedMotion} />
                 <CurtainPanel side="right" isOpen={isOpen} reducedMotion={reducedMotion} />
 
-                {/* One persistent button preserves keyboard focus between the two steps. */}
                 <div className={`booth-controls absolute inset-x-0 top-[46%] flex flex-col items-center px-5 ${isOpen ? 'z-10' : 'z-30'}`}>
-                  <motion.button
-                    type="button"
-                    disabled={isClosing}
-                    aria-controls="booth-interior"
-                    aria-expanded={isOpen}
-                    onClick={() => setCurtainState((current) => current === 'closed' ? 'open' : current === 'open' ? 'closing' : current)}
-                    className="booth-start-button w-full max-w-64 cursor-pointer rounded-xl border-[3px] border-ink bg-[#fff0b5] px-3 py-3 text-center font-display text-[clamp(1rem,3vw,1.3rem)] tracking-wide shadow-brutal-sm outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-ink disabled:cursor-wait"
-                    animate={{ scale: isOpen && !reducedMotion ? [1, 1.035, 1] : 1 }}
-                    transition={{ duration: 1.8, ease: 'easeInOut', repeat: isOpen && !reducedMotion ? Infinity : 0 }}
-                    whileHover={isClosing || reducedMotion ? undefined : { y: -3 }}
-                    whileTap={isClosing || reducedMotion ? undefined : { scale: 0.97 }}
-                  >
-                    {isClosing ? 'GET READY…' : isOpen ? 'CLOSE CURTAIN & START 📸' : 'OPEN CURTAIN ✨'}
-                  </motion.button>
+                  {tokenStep !== 'token-inserted' ? (
+                    <div className="booth-locked-badge">
+                      <Cat size={27} strokeWidth={2} aria-hidden="true" />
+                      <span>insert a coin first! ⬅️</span>
+                      <small>{tokenStep === 'need-token' ? 'Grab a free token from the machine' : 'Drag or tap your golden cat token'}</small>
+                    </div>
+                  ) : (
+                    <motion.button
+                      ref={startButtonRef}
+                      type="button"
+                      disabled={isClosing}
+                      aria-controls="booth-interior"
+                      aria-expanded={isOpen}
+                      onClick={() => { if (tokenStep === 'token-inserted' && isOpen) setCurtainState('closing') }}
+                      className="booth-start-button w-full max-w-64 cursor-pointer rounded-xl border-[3px] border-ink bg-[#fff0b5] px-3 py-3 text-center font-display text-[clamp(1rem,3vw,1.3rem)] tracking-wide shadow-brutal-sm outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-ink disabled:cursor-wait"
+                      animate={{ scale: isOpen && !reducedMotion ? [1, 1.035, 1] : 1 }}
+                      transition={{ duration: 1.8, ease: 'easeInOut', repeat: isOpen && !reducedMotion ? Infinity : 0 }}
+                      whileHover={isClosing || reducedMotion ? undefined : { y: -3 }}
+                      whileTap={isClosing || reducedMotion ? undefined : { scale: 0.97 }}
+                    >
+                      {isClosing ? 'GET READY…' : 'STEP IN & CLOSE CURTAIN 📸'}
+                    </motion.button>
+                  )}
                   <span className={`mt-4 rounded-full px-3 py-1 text-center text-[9px] font-bold uppercase tracking-[0.12em] ${isOpen ? 'bg-paper text-ink' : 'bg-[#78374b] text-white'}`}>
                     {isClosing ? 'Your moment is coming' : isOpen ? 'Take a seat. Make a memory.' : 'A little magic behind the curtain'}
                   </span>
@@ -249,7 +278,7 @@ export default function Home({ onStart }: HomeProps) {
         <span className="flex items-center gap-1.5"><Heart size={15} aria-hidden="true" /> Yours to keep</span>
       </div>
       <p role="status" className="sr-only">
-        {isClosing ? 'Curtains closing. Starting your photobooth session.' : isOpen ? 'Curtains open. Close the curtain and start when you are ready.' : 'Welcome to Catabooth. Open the curtain to step inside.'}
+        {isClosing ? 'Curtains closing. Starting your photobooth session.' : isOpen ? 'Token accepted! Curtains open. Step in and close the curtain when you are ready.' : tokenStep === 'token-dispensed' ? `Visitor ${visitorCount}. Your coin is ready. Drag it to the slot, or activate the coin or slot to insert it.` : 'Welcome to Catabooth. Dispense a free coin to unlock the curtain.'}
       </p>
     </section>
   )

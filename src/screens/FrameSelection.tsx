@@ -22,7 +22,7 @@ const MODE_CONFIG: Record<
   },
   together: {
     Icon: Users,
-    bg: 'bg-pop-magenta text-white',
+    bg: 'bg-pop-magenta text-ink',
     badge: '5s Countdown + Group Badge',
     rotate: 1.5,
   },

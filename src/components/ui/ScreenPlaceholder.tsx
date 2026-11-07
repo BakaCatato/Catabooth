@@ -13,7 +13,7 @@ export default function ScreenPlaceholder({
 }) {
   return (
     <section className="flex min-h-dvh items-center justify-center p-6">
-      <div className="w-full max-w-xl rounded-2xl border-[5px] border-ink bg-white p-8 text-center shadow-brutal-lg">
+      <div className="w-full max-w-xl rounded-2xl border-[5px] border-ink bg-paper p-8 text-center shadow-brutal-lg">
         <h2 className="mb-6 font-display text-5xl tracking-wide">{title}</h2>
         <div className="flex flex-wrap justify-center gap-3">{children}</div>
       </div>
