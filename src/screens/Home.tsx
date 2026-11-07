@@ -1,344 +1,256 @@
-import { motion, type Variants } from 'framer-motion'
-import {
-  Camera,
-  Download,
-  Film,
-  Heart,
-  Images,
-  Palette,
-  Sparkles,
-  Star,
-  Zap,
-  type LucideIcon,
-} from 'lucide-react'
-import HalftoneBackground from '../components/ui/HalftoneBackground'
+import { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Camera, Cat, Heart, Sparkles, Star } from 'lucide-react'
 import type { HomeProps } from '../types/photobooth'
+import './Home.css'
 
-/* ------------------------------------------------------------------ */
-/*  Static config                                                      */
-/* ------------------------------------------------------------------ */
+type CurtainState = 'closed' | 'open' | 'closing'
 
-const INK = '#0a0a0a'
-const LETTER_COLORS = [
-  'text-pop-magenta',
-  'text-pop-yellow',
-  'text-pop-green',
-  'text-white',
+const FEATURED_STRIPS = [
+  { paper: '#fff8e7', backdrop: '#e9b8c7', fur: '#f3c779', tilt: -9, caption: 'MEOW!' },
+  { paper: '#f4d6df', backdrop: '#bcd7cf', fur: '#fff8e7', tilt: 6, caption: 'BFFS' },
+  { paper: '#fff0b5', backdrop: '#c9c1df', fur: '#b7c8d8', tilt: -5, caption: 'CHEESE' },
+  { paper: '#e4dff1', backdrop: '#efcea5', fur: '#f8e3ce', tilt: 10, caption: 'LOVE YA' },
 ] as const
 
-/** 20-point comic "POW!" starburst */
-const STARBURST =
-  'polygon(50% 0%, 61% 18%, 82% 7%, 79% 30%, 100% 35%, 84% 50%, 100% 65%, 79% 70%, 82% 93%, 61% 82%, 50% 100%, 39% 82%, 18% 93%, 21% 70%, 0% 65%, 16% 50%, 0% 35%, 21% 30%, 18% 7%, 39% 18%)'
-
-interface FloatingSticker {
-  Icon: LucideIcon
-  position: string
-  bg: string
-  rotate: number
-  duration: number
-  delay: number
-}
-
-const FLOATING_STICKERS: FloatingSticker[] = [
-  { Icon: Camera, position: 'left-[5%] top-[14%]', bg: 'bg-pop-yellow', rotate: -12, duration: 5, delay: 0 },
-  { Icon: Star, position: 'right-[6%] top-[12%]', bg: 'bg-pop-green', rotate: 14, duration: 4.2, delay: 0.5 },
-  { Icon: Heart, position: 'left-[8%] bottom-[14%]', bg: 'bg-pop-magenta', rotate: 10, duration: 4.6, delay: 1.1 },
-  { Icon: Zap, position: 'right-[9%] bottom-[16%]', bg: 'bg-pop-yellow', rotate: -8, duration: 3.8, delay: 0.3 },
-  { Icon: Sparkles, position: 'left-[24%] top-[6%] hidden md:block', bg: 'bg-white', rotate: 6, duration: 5.4, delay: 0.8 },
-  { Icon: Film, position: 'right-[26%] bottom-[7%] hidden md:block', bg: 'bg-pop-green', rotate: -15, duration: 4.4, delay: 1.4 },
-]
-
-const FEATURES: { Icon: LucideIcon; label: string; bg: string; rotate: number }[] = [
-  { Icon: Images, label: '2 – 8 Shots', bg: 'bg-pop-yellow', rotate: -3 },
-  { Icon: Palette, label: 'Retro Filters', bg: 'bg-pop-green', rotate: 2 },
-  { Icon: Download, label: 'Instant Download', bg: 'bg-white', rotate: -1 },
-]
-
-const MARQUEE_TEXT = 'SAY CHEESE! ★ STRIKE A POSE! ★ SMILE! ★ POP! ★ CLICK! ★ '
-
-const SHADOW_REST = `10px 10px 0px 0px ${INK}`
-const SHADOW_HOVER = `14px 14px 0px 0px ${INK}`
-const SHADOW_PRESSED = `0px 0px 0px 0px ${INK}`
-
-/* ------------------------------------------------------------------ */
-/*  Animation variants                                                 */
-/* ------------------------------------------------------------------ */
-
-const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.9 } },
-}
-
-const popIn: Variants = {
-  hidden: { opacity: 0, scale: 0.4, y: 40 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 420, damping: 16 },
-  },
-}
-
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
-/* ------------------------------------------------------------------ */
-
-function Marquee({ reverse = false, className = '' }: { reverse?: boolean; className?: string }) {
+/** Tiny ink-drawn portraits keep the showcase crisp at every screen size. */
+function CatPortrait({ fur, pose }: { fur: string; pose: number }) {
   return (
-    <div
-      aria-hidden
-      className={`relative z-20 overflow-hidden border-y-4 border-ink py-2 ${className}`}
-    >
-      <motion.div
-        className="flex w-max whitespace-nowrap font-display text-2xl tracking-widest md:text-3xl"
-        animate={{ x: reverse ? ['-50%', '0%'] : ['0%', '-50%'] }}
-        transition={{ duration: 18, ease: 'linear', repeat: Infinity }}
-      >
-        {/* Two identical halves → seamless loop at -50% */}
-        <span className="pr-4">{MARQUEE_TEXT.repeat(4)}</span>
-        <span className="pr-4">{MARQUEE_TEXT.repeat(4)}</span>
-      </motion.div>
+    <svg viewBox="0 0 64 54" fill="none" aria-hidden="true">
+      <path d="M10 54c0-13 8-20 22-20s22 7 22 20" fill={fur} stroke="currentColor" strokeWidth="2.5" />
+      <path
+        d="m13 25-1-18 14 9a28 28 0 0 1 13 0l13-9-1 19c7 18-3 23-19 23S6 43 13 25Z"
+        fill={fur}
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <path d="m17 14 1 10 6-4m22-6-1 10-6-4" fill="#e7a0ae" />
+      {pose === 1 ? (
+        <path d="m20 31 5-2-5-2m18 4 5-2-5-2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      ) : (
+        <>
+          <ellipse cx="23" cy="29" rx="2" ry="3" fill="currentColor" />
+          <ellipse cx="41" cy="29" rx="2" ry="3" fill="currentColor" />
+        </>
+      )}
+      <ellipse cx="18" cy="35" rx="4" ry="2.5" fill="#e7a0ae" />
+      <ellipse cx="46" cy="35" rx="4" ry="2.5" fill="#e7a0ae" />
+      <path d="m29 33 3 3 3-3Z" fill="currentColor" />
+      <path d="M26 38q3 5 6-2 3 7 6 2M9 31l7 2m-8 5 8-1m32-4 7-2m-7 6 8 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {pose === 2 && <path d="m46 8 3-5 3 5 5 2-5 2-3 5-3-5-5-2Z" fill="#fff8e7" stroke="currentColor" strokeWidth="1.5" />}
+    </svg>
+  )
+}
+
+function FeaturedStrips({ reducedMotion }: { reducedMotion: boolean }) {
+  return (
+    <div className="booth-showcase rounded-2xl border-4 border-ink">
+      <h2 className="relative z-10 border-b-4 border-ink bg-[#fff0b5] px-2 py-2 text-center font-display text-2xl tracking-[0.12em]">
+        FEATURED STRIPS
+      </h2>
+      <div className="relative px-4 pb-4 pt-10" aria-hidden="true">
+        <svg className="absolute left-0 top-3 h-9 w-full" viewBox="0 0 300 36" preserveAspectRatio="none" fill="none">
+          <path d="M-5 8Q150 48 305 8" stroke="#0a0a0a" strokeWidth="2.5" />
+        </svg>
+        <div className="relative flex items-start justify-center gap-3">
+          {FEATURED_STRIPS.map(({ paper, backdrop, fur, tilt, caption }, index) => (
+            <motion.div
+              key={caption}
+              className="booth-mini-strip"
+              style={{ backgroundColor: paper, marginTop: index === 1 || index === 2 ? 9 : 0 }}
+              initial={false}
+              animate={{ rotate: reducedMotion ? tilt : [tilt, tilt + 3, tilt] }}
+              transition={{ duration: 4.5 + index * 0.4, ease: 'easeInOut', repeat: Infinity }}
+            >
+              <span className="booth-clothespin" />
+              {[0, 1, 2].map((pose) => (
+                <div key={pose} className="mb-1 overflow-hidden border-[1.5px] border-ink" style={{ backgroundColor: backdrop }}>
+                  <CatPortrait fur={fur} pose={(pose + index) % 3} />
+                </div>
+              ))}
+              <span className="block whitespace-nowrap text-center font-display text-[8px] tracking-wide">{caption}</span>
+            </motion.div>
+          ))}
+        </div>
+        <p className="mt-6 text-center text-[9px] font-bold tracking-[0.2em]">GOOD TIMES, ON REPEAT.</p>
+      </div>
+      <p className="sr-only">Four colorful photo strips with playful illustrated cats hang from a string.</p>
     </div>
   )
 }
 
-function BouncyWord({ word, offset }: { word: string; offset: number }) {
+function TokenDispenser() {
   return (
-    <span aria-hidden className="flex justify-center">
-      {word.split('').map((char, i) => {
-        const idx = offset + i
-        return (
-          // Outer span: one-time drop-in entrance
-          <motion.span
-            key={`${char}-${idx}`}
-            className="inline-block"
-            initial={{ y: -220, opacity: 0, rotate: -30 }}
-            animate={{ y: 0, opacity: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 13, delay: 0.15 + idx * 0.06 }}
-          >
-            {/* Inner span: perpetual idle wobble */}
-            <motion.span
-              className={`inline-block px-0.5 text-outline text-shadow-brutal ${LETTER_COLORS[idx % LETTER_COLORS.length]}`}
-              animate={{ y: [0, -10, 0], rotate: [0, idx % 2 === 0 ? -4 : 4, 0] }}
-              transition={{
-                duration: 1.8,
-                ease: 'easeInOut',
-                repeat: Infinity,
-                delay: 1.2 + idx * 0.12,
-              }}
-            >
-              {char}
-            </motion.span>
-          </motion.span>
-        )
-      })}
-    </span>
-  )
-}
-
-function PowBurst() {
-  return (
-    <motion.div
-      aria-hidden
-      className="absolute -right-4 -top-10 z-10 h-24 w-24 sm:-right-10 md:-right-20 md:-top-6 md:h-32 md:w-32"
-      initial={{ scale: 0, rotate: -180 }}
-      animate={{ scale: 1, rotate: 12 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 12, delay: 1 }}
-    >
-      <motion.div
-        className="relative h-full w-full"
-        animate={{ scale: [1, 1.12, 1], rotate: [0, 8, 0] }}
-        transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity }}
-      >
-        <div className="absolute inset-0 bg-ink" style={{ clipPath: STARBURST }} />
-        <div className="absolute inset-[6px] bg-pop-yellow" style={{ clipPath: STARBURST }} />
-        <span className="absolute inset-0 flex items-center justify-center font-display text-2xl text-pop-magenta text-outline-sm md:text-4xl">
-          POW!
-        </span>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-function Polaroid({
-  className,
-  rotate,
-  bg,
-  caption,
-  delay,
-}: {
-  className: string
-  rotate: number
-  bg: string
-  caption: string
-  delay: number
-}) {
-  return (
-    <motion.div
-      aria-hidden
-      className={`absolute z-0 hidden w-40 border-4 border-ink bg-white p-2 pb-8 shadow-brutal lg:block ${className}`}
-      initial={{ opacity: 0, y: 80, rotate: 0 }}
-      animate={{ opacity: 1, y: [0, -14, 0], rotate: [rotate, rotate + 3, rotate] }}
-      transition={{
-        opacity: { duration: 0.4, delay },
-        y: { duration: 5, ease: 'easeInOut', repeat: Infinity, delay },
-        rotate: { duration: 6, ease: 'easeInOut', repeat: Infinity, delay },
-      }}
-    >
-      <div className={`relative h-32 overflow-hidden border-4 border-ink ${bg}`}>
-        <HalftoneBackground dotColor="rgba(10,10,10,0.35)" size={12} dotRadius={2.5} duration={3} />
-        <Camera className="absolute inset-0 m-auto h-12 w-12 text-ink" strokeWidth={2.5} />
+    <div className="mt-6 flex items-center justify-between gap-3">
+      <div className="booth-token-panel" aria-hidden="true">
+        <span className="font-display text-sm tracking-widest">ONE HAPPY TOKEN</span>
+        <div className="my-3 flex items-center justify-center gap-4">
+          <div className="booth-token"><Star size={20} strokeWidth={2.5} /></div>
+          <div className="booth-coin-slot"><span /></div>
+        </div>
+        <div className="h-4 rounded-sm border-[3px] border-ink bg-[#554848] shadow-[inset_0_4px_0_#0a0a0a]" />
+        <span className="mt-2 block text-[8px] font-bold tracking-[0.13em]">100% FREE · ALWAYS</span>
       </div>
-      <p className="absolute bottom-1.5 left-0 right-0 text-center font-display text-lg tracking-wider">
-        {caption}
-      </p>
-    </motion.div>
+      <div className="booth-entrance-note" aria-hidden="true">
+        <span>psst…<br />step inside!</span>
+        <svg viewBox="0 0 100 65" className="mt-1 w-24" fill="none">
+          <path d="M10 9c-9 28 32 44 48 22 9-14-13-23-18-8-7 22 33 27 49 12m-19-3 20 2-6 18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Home screen                                                        */
-/* ------------------------------------------------------------------ */
+function BoothInterior() {
+  return (
+    <div id="booth-interior" className="booth-interior absolute inset-0" aria-hidden="true">
+      <div className="booth-interior-wall" />
+      <span className="absolute left-5 top-7 -rotate-12"><Sparkles size={26} strokeWidth={2} /></span>
+      <span className="absolute right-7 top-36 rotate-12"><Heart size={23} strokeWidth={2} /></span>
+      <div className="booth-camera">
+        <span className="absolute left-3 top-3 h-2 w-2 rounded-full border border-ink bg-[#d5edb5]" />
+        <div className="booth-camera-lens"><span /></div>
+        <span className="absolute right-2 top-3 h-3 w-6 rounded-sm border-2 border-ink bg-[#fff0b5]" />
+        <span className="absolute bottom-2 left-0 right-0 text-center text-[8px] font-bold tracking-[0.18em]">LOOK HERE & SMILE</span>
+      </div>
+      <div className="booth-floor" />
+      <div className="booth-stool">
+        <div className="booth-stool-base" />
+        <div className="booth-stool-stem" />
+        <div className="booth-stool-lever" />
+        <div className="booth-stool-seat" />
+      </div>
+    </div>
+  )
+}
+
+function CurtainPanel({ side, isOpen, reducedMotion }: { side: 'left' | 'right'; isOpen: boolean; reducedMotion: boolean }) {
+  return (
+    <motion.div
+      aria-hidden="true"
+      className={`booth-curtain booth-curtain-${side}`}
+      initial={false}
+      animate={{ x: isOpen ? (side === 'left' ? '-82%' : '82%') : '0%' }}
+      transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 180, damping: 26, mass: 0.8 }}
+    >
+      <div className="booth-curtain-rings">
+        {[0, 1, 2, 3, 4].map((ring) => <span key={ring} />)}
+      </div>
+      <span className="booth-curtain-seam" />
+    </motion.div>
+  )
+}
 
 export default function Home({ onStart }: HomeProps) {
+  const [curtainState, setCurtainState] = useState<CurtainState>('closed')
+  const reducedMotion = useReducedMotion() ?? false
+  const isOpen = curtainState === 'open'
+  const isClosing = curtainState === 'closing'
+
+  useEffect(() => {
+    if (curtainState !== 'closing') return
+
+    const timer = window.setTimeout(onStart, 550)
+    return () => window.clearTimeout(timer)
+  }, [curtainState, onStart])
+
   return (
-    <section className="relative flex min-h-dvh flex-col overflow-hidden bg-pop-cyan">
-      {/* ---------- Background layers ---------- */}
-
-      {/* Rotating comic sunburst rays */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[250vmax] w-[250vmax] -translate-x-1/2 -translate-y-1/2 opacity-40"
-        style={{
-          background:
-            'repeating-conic-gradient(from 0deg, #ffffff 0deg 9deg, transparent 9deg 18deg)',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 90, ease: 'linear', repeat: Infinity }}
-      />
-
-      {/* Global drifting halftone */}
-      <HalftoneBackground dotColor="rgba(10,10,10,0.16)" size={22} dotRadius={3} duration={4} />
-
-      {/* Big magenta halftone blobs */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 overflow-hidden rounded-full [mask-image:radial-gradient(circle,black_30%,transparent_70%)]"
-      >
-        <HalftoneBackground dotColor="#ff2bd6" size={16} dotRadius={5} duration={5} direction={-1} />
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] overflow-hidden rounded-full [mask-image:radial-gradient(circle,black_30%,transparent_70%)]"
-      >
-        <HalftoneBackground dotColor="#ffe600" size={18} dotRadius={6} duration={6} />
+    <section className="booth-home relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-8 text-ink sm:px-8 sm:py-10" aria-labelledby="booth-title">
+      <div className="relative mb-6 flex items-center gap-3 text-center text-[10px] font-bold uppercase tracking-[0.2em] sm:text-xs">
+        <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+        A little booth. A lot of memories.
+        <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
       </div>
 
-      {/* ---------- Top ticker ---------- */}
-      <Marquee className="-rotate-1 bg-pop-yellow" />
+      <div className="relative isolate w-full max-w-4xl pb-4">
+        <div className="booth-machine relative rounded-t-[2rem] rounded-b-xl border-4 border-ink bg-paper">
+          <header className="booth-marquee relative border-b-4 border-ink px-5 py-5 sm:px-9">
+            <div className="booth-bulbs booth-bulbs-top" aria-hidden="true">
+              {Array.from({ length: 13 }, (_, index) => <span key={index} />)}
+            </div>
+            <div className="booth-sign relative flex items-center justify-center gap-3 rounded-xl border-[3px] border-ink px-2 py-3 sm:gap-5">
+              <Star className="hidden h-6 w-6 shrink-0 fill-[#e9b8c7] min-[400px]:block sm:h-9 sm:w-9" strokeWidth={2.5} aria-hidden="true" />
+              <div className="min-w-0 text-center">
+                <h1 id="booth-title" className="font-display text-[clamp(2.1rem,7vw,4.5rem)] leading-none tracking-[0.08em] text-[#b84c6a] text-outline-sm [text-shadow:2px_3px_0_#efc89d]">CATABOOTH</h1>
+                <p className="mt-2 text-[8px] font-bold uppercase tracking-[0.23em] sm:text-[10px]">Step in. Be silly. Keep the memory.</p>
+              </div>
+              <Star className="hidden h-6 w-6 shrink-0 fill-[#e9b8c7] min-[400px]:block sm:h-9 sm:w-9" strokeWidth={2.5} aria-hidden="true" />
+            </div>
+            <div className="booth-bulbs booth-bulbs-bottom" aria-hidden="true">
+              {Array.from({ length: 13 }, (_, index) => <span key={index} />)}
+            </div>
+          </header>
 
-      {/* ---------- Floating stickers ---------- */}
-      {FLOATING_STICKERS.map(({ Icon, position, bg, rotate, duration, delay }) => (
-        <motion.div
-          key={position}
-          aria-hidden
-          className={`absolute z-10 ${position}`}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1, y: [0, -18, 0], rotate: [rotate, -rotate, rotate] }}
-          transition={{
-            scale: { type: 'spring', stiffness: 400, damping: 12, delay: 0.6 + delay },
-            y: { duration, ease: 'easeInOut', repeat: Infinity, delay },
-            rotate: { duration: duration * 1.3, ease: 'easeInOut', repeat: Infinity, delay },
-          }}
-        >
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-xl border-4 border-ink shadow-brutal-sm md:h-16 md:w-16 md:shadow-brutal ${bg}`}
-          >
-            <Icon className="h-6 w-6 text-ink md:h-8 md:w-8" strokeWidth={2.75} />
+          <div className="grid gap-6 p-4 sm:grid-cols-[0.95fr_1.05fr] sm:gap-7 sm:p-7">
+            <div className="flex min-w-0 flex-col justify-between">
+              <FeaturedStrips reducedMotion={reducedMotion} />
+              <TokenDispenser />
+              <div className="mt-5 flex items-center justify-center gap-2 text-center text-[9px] font-bold uppercase tracking-[0.14em]">
+                <Cat size={19} strokeWidth={2.5} aria-hidden="true" />
+                Made for you & your favorite humans
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em]">
+                  <span className={`h-2.5 w-2.5 rounded-full border-2 border-ink ${isClosing ? 'bg-[#e9b8c7]' : 'bg-[#b8d8a0]'}`} aria-hidden="true" />
+                  {isClosing ? 'IN SESSION' : 'BOOTH IS ALL YOURS'}
+                </span>
+                <span className="font-display text-sm tracking-widest">NO. 01</span>
+              </div>
+
+              <div className="booth-doorway relative isolate overflow-hidden rounded-t-[1.5rem] border-4 border-ink" data-curtain-state={curtainState}>
+                <BoothInterior />
+                <div className="booth-curtain-rail" aria-hidden="true" />
+                <CurtainPanel side="left" isOpen={isOpen} reducedMotion={reducedMotion} />
+                <CurtainPanel side="right" isOpen={isOpen} reducedMotion={reducedMotion} />
+
+                {/* One persistent button preserves keyboard focus between the two steps. */}
+                <div className={`booth-controls absolute inset-x-0 top-[46%] flex flex-col items-center px-5 ${isOpen ? 'z-10' : 'z-30'}`}>
+                  <motion.button
+                    type="button"
+                    disabled={isClosing}
+                    aria-controls="booth-interior"
+                    aria-expanded={isOpen}
+                    onClick={() => setCurtainState((current) => current === 'closed' ? 'open' : current === 'open' ? 'closing' : current)}
+                    className="booth-start-button w-full max-w-64 cursor-pointer rounded-xl border-[3px] border-ink bg-[#fff0b5] px-3 py-3 text-center font-display text-[clamp(1rem,3vw,1.3rem)] tracking-wide shadow-brutal-sm outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-ink disabled:cursor-wait"
+                    animate={{ scale: isOpen && !reducedMotion ? [1, 1.035, 1] : 1 }}
+                    transition={{ duration: 1.8, ease: 'easeInOut', repeat: isOpen && !reducedMotion ? Infinity : 0 }}
+                    whileHover={isClosing || reducedMotion ? undefined : { y: -3 }}
+                    whileTap={isClosing || reducedMotion ? undefined : { scale: 0.97 }}
+                  >
+                    {isClosing ? 'GET READY…' : isOpen ? 'CLOSE CURTAIN & START 📸' : 'OPEN CURTAIN ✨'}
+                  </motion.button>
+                  <span className={`mt-4 rounded-full px-3 py-1 text-center text-[9px] font-bold uppercase tracking-[0.12em] ${isOpen ? 'bg-paper text-ink' : 'bg-[#78374b] text-white'}`}>
+                    {isClosing ? 'Your moment is coming' : isOpen ? 'Take a seat. Make a memory.' : 'A little magic behind the curtain'}
+                  </span>
+                </div>
+                <div className="booth-threshold" aria-hidden="true" />
+              </div>
+              <p className="mt-3 text-center text-[9px] font-bold uppercase tracking-[0.18em]">Your best side? Every side.</p>
+            </div>
           </div>
-        </motion.div>
-      ))}
 
-      {/* ---------- Decorative polaroids ---------- */}
-      <Polaroid className="left-[9%] top-[34%]" rotate={-10} bg="bg-pop-magenta" caption="CHEESE!" delay={1.3} />
-      <Polaroid className="right-[9%] top-[30%]" rotate={9} bg="bg-pop-green" caption="POSE!" delay={1.5} />
-
-      {/* ---------- Main content ---------- */}
-      <div className="relative z-20 flex flex-1 flex-col items-center justify-center gap-10 px-4 py-12">
-        {/* Tagline badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -30, rotate: 0 }}
-          animate={{ opacity: 1, y: 0, rotate: -3 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 14, delay: 0.1 }}
-          className="rounded-full border-4 border-ink bg-white px-5 py-1.5 font-body text-sm font-bold uppercase tracking-[0.2em] shadow-brutal-sm md:text-base"
-        >
-          ★ The Web Photobooth ★
-        </motion.div>
-
-        {/* Title */}
-        <div className="relative">
-          <h1 className="font-display text-[4.5rem] leading-[0.85] tracking-wide sm:text-8xl md:text-[9rem] lg:text-[11rem]">
-            <span className="sr-only">Cata Booth!</span>
-            <BouncyWord word="CATA" offset={0} />
-            <BouncyWord word="BOOTH!" offset={4} />
-          </h1>
-          <PowBurst />
+          <div className="booth-plinth flex items-center justify-between border-t-4 border-ink px-5 py-2" aria-hidden="true">
+            <span className="booth-screw" />
+            <span className="font-display text-xs tracking-[0.3em]">SMALL MOMENTS. BIG KEEPSAKES.</span>
+            <span className="booth-screw" />
+          </div>
         </div>
-
-        {/* CTA — wrapper handles idle bounce, button handles hover/tap physics */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 12, delay: 0.8 }}
-        >
-          <motion.div
-            animate={{ y: [0, -12, 0], scale: [1, 1.04, 1] }}
-            transition={{ duration: 1.1, ease: 'easeInOut', repeat: Infinity, delay: 1.4 }}
-          >
-            <motion.button
-              type="button"
-              onClick={onStart}
-              aria-label="Start Photobooth"
-              className="group flex cursor-pointer items-center gap-4 rounded-2xl border-[5px] border-ink bg-pop-magenta px-7 py-4 font-display text-3xl tracking-wider text-white text-outline-sm outline-none focus-visible:ring-8 focus-visible:ring-pop-yellow sm:text-4xl md:gap-5 md:px-12 md:py-6 md:text-5xl"
-              initial={{ boxShadow: SHADOW_REST }}
-              animate={{ x: 0, y: 0, rotate: 0, boxShadow: SHADOW_REST }}
-              whileHover={{ x: -4, y: -4, rotate: -2, boxShadow: SHADOW_HOVER }}
-              whileTap={{ x: 10, y: 10, rotate: 0, boxShadow: SHADOW_PRESSED }}
-              transition={{ type: 'spring', stiffness: 600, damping: 18 }}
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-ink bg-pop-yellow transition-transform duration-300 group-hover:rotate-[20deg] group-hover:scale-110 md:h-16 md:w-16">
-                <Camera className="h-6 w-6 text-ink md:h-9 md:w-9" strokeWidth={2.75} />
-              </span>
-              Start Photobooth
-            </motion.button>
-          </motion.div>
-        </motion.div>
-
-        {/* Feature chips */}
-        <motion.ul
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-          className="flex flex-wrap items-center justify-center gap-3 md:gap-5"
-        >
-          {FEATURES.map(({ Icon, label, bg, rotate }) => (
-            <motion.li
-              key={label}
-              variants={popIn}
-              whileHover={{ rotate: 0, scale: 1.08 }}
-              style={{ rotate }}
-              className={`flex items-center gap-2 rounded-lg border-4 border-ink px-3 py-1.5 font-body text-sm font-bold uppercase shadow-brutal-sm md:text-base ${bg}`}
-            >
-              <Icon className="h-4 w-4 md:h-5 md:w-5" strokeWidth={3} />
-              {label}
-            </motion.li>
-          ))}
-        </motion.ul>
+        <span className="booth-foot left-8" aria-hidden="true" />
+        <span className="booth-foot right-8" aria-hidden="true" />
       </div>
 
-      {/* ---------- Bottom ticker ---------- */}
-      <Marquee reverse className="rotate-1 bg-pop-magenta text-white" />
+      <div className="relative mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] font-bold uppercase tracking-[0.12em] sm:gap-x-8">
+        <span className="flex items-center gap-1.5"><Camera size={15} aria-hidden="true" /> 2–8 shots</span>
+        <span className="flex items-center gap-1.5"><Sparkles size={15} aria-hidden="true" /> Retro filters</span>
+        <span className="flex items-center gap-1.5"><Heart size={15} aria-hidden="true" /> Yours to keep</span>
+      </div>
+      <p role="status" className="sr-only">
+        {isClosing ? 'Curtains closing. Starting your photobooth session.' : isOpen ? 'Curtains open. Close the curtain and start when you are ready.' : 'Welcome to Catabooth. Open the curtain to step inside.'}
+      </p>
     </section>
   )
 }
-

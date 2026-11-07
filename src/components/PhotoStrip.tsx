@@ -76,7 +76,7 @@ export default function PhotoStrip({
             textShadow: design.headerShadow,
           }}
         >
-          CATA BOOTH! {design.motif ? ` ${design.motif}` : ''}
+          CATABOOTH{design.motif ? ` ${design.motif}` : ''}
         </div>
         {boothMode === 'together' && (
           <div
