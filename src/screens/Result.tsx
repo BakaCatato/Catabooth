@@ -87,7 +87,7 @@ export default function Result({
 
       const dataUrl = canvas.toDataURL('image/png')
       const link = document.createElement('a')
-      link.download = `pop-booth-${Date.now()}.png`
+      link.download = `catabooth-${Date.now()}.png`
       link.href = dataUrl
       document.body.appendChild(link)
       link.click()

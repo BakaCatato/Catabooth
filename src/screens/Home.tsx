@@ -278,9 +278,9 @@ export default function Home({ onStart }: HomeProps) {
         {/* Title */}
         <div className="relative">
           <h1 className="font-display text-[4.5rem] leading-[0.85] tracking-wide sm:text-8xl md:text-[9rem] lg:text-[11rem]">
-            <span className="sr-only">Photo Booth!</span>
-            <BouncyWord word="PHOTO" offset={0} />
-            <BouncyWord word="BOOTH!" offset={5} />
+            <span className="sr-only">Cata Booth!</span>
+            <BouncyWord word="CATA" offset={0} />
+            <BouncyWord word="BOOTH!" offset={4} />
           </h1>
           <PowBurst />
         </div>
