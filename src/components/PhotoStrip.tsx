@@ -28,6 +28,8 @@ interface PhotoStripProps {
   /** Show preview-only controls for selective retakes. Omitted from the finished strip. */
   onPhotoClick?: (index: number) => void
   dateStr?: string
+  caption?: string
+  showDate?: boolean
   ref?: Ref<HTMLDivElement>
 }
 
@@ -41,6 +43,8 @@ export default function PhotoStrip({
   applyCssFilter = true,
   onPhotoClick,
   dateStr = 'made with love',
+  caption = '',
+  showDate = true,
   ref,
 }: PhotoStripProps) {
   const columns = layout === '2-column-grid' ? 2 : 1
@@ -173,7 +177,7 @@ export default function PhotoStrip({
                 size={30}
                 style={{
                   position: 'absolute',
-                  ...(leftEdge ? { left: -16, top: -10 } : { right: -16, bottom: -10 }),
+                  ...(leftEdge ? { left: -18, top: -16 } : { right: -18, top: -16 }),
                   transform: `rotate(${leftEdge ? -14 : 12}deg)`,
                 }}
               />
@@ -183,6 +187,11 @@ export default function PhotoStrip({
       </div>
 
       {/* ---------- Strip Footer ---------- */}
+      {caption.trim() && (
+        <p data-strip-caption style={{ margin: '14px 0 0', fontFamily: '"Segoe Print", "Bradley Hand", cursive', fontSize: 14, fontWeight: 700, lineHeight: 1.5, textAlign: 'center', overflowWrap: 'anywhere', color: design.footerText }}>
+          {caption}
+        </p>
+      )}
       <div
         style={{
           marginTop: 15,
@@ -199,8 +208,8 @@ export default function PhotoStrip({
           color: design.footerText,
         }}
       >
-        <span>{dateStr}</span>
-        <span style={{ whiteSpace: 'nowrap' }}>{photos.length} LITTLE MEMORIES</span>
+        {showDate && <span data-strip-date>{dateStr}</span>}
+        <span style={{ whiteSpace: 'nowrap', marginLeft: showDate ? undefined : 'auto' }}>{photos.length} LITTLE MEMORIES</span>
       </div>
     </div>
   )

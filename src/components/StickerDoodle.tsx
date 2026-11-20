@@ -68,6 +68,41 @@ function ChromeStar() {
 function artwork(pack: Exclude<StickerPackId, 'none'>, variant: number): ReactNode {
   const v = variant % 3
   switch (pack) {
+    case 'cherry-soda':
+      if (v === 0) return <>
+        <path d="M18 38Q32 26 34 8q1 20 12 31M34 8q13-8 21 4-11 7-21-4" fill="#bfe3d0" />
+        <circle cx="17" cy="44" r="12" fill="#dc667d" /><circle cx="46" cy="45" r="12" fill="#f3a6b8" />
+        <path d="m11 40 3-3m26 5 3-3" stroke="#fffaf1" strokeWidth="3" />
+      </>
+      if (v === 1) return <>
+        <path d="m32 4 6 5 8-1 3 8 8 3-1 8 5 5-5 6 1 8-8 3-3 8-8-1-6 5-5-5-8 1-3-8-8-3 1-8-5-6 5-5-1-8 8-3 3-8 8 1Z" fill="#f3a6b8" />
+        <circle cx="32" cy="32" r="19" fill="#fffaf1" /><path d="m32 19 4 9 10 4-10 4-4 10-4-10-10-4 10-4Z" fill="#f7d97e" />
+      </>
+      return <>
+        <circle cx="23" cy="40" r="17" fill="#f6ccd6" /><circle cx="46" cy="19" r="11" fill="#d8eee7" /><circle cx="48" cy="49" r="6" fill="#f7d97e" />
+        <path d="M13 37q1-8 8-9m19-12 3-3M12 10v8m-4-4h8" stroke="#fffaf1" strokeWidth="3" />
+      </>
+    case 'picnic':
+      if (v === 0) return <>
+        <rect x="8" y="8" width="48" height="48" rx="3" fill="#fffaf1" />
+        {[0, 2, 4].map((n) => <g key={n} stroke="none">
+          <rect x={8 + n * 8} y="8" width="8" height="48" fill="#d1e0c1" />
+          <rect x="8" y={8 + n * 8} width="48" height="8" fill="#d1e0c1" />
+          {[0, 2, 4].map((m) => <rect key={m} x={8 + n * 8} y={8 + m * 8} width="8" height="8" fill="#91af7e" />)}
+        </g>)}
+        <rect x="8" y="8" width="48" height="48" rx="3" /><path d="M12 12h40v40H12Z" strokeDasharray="3 4" strokeWidth="1.2" />
+      </>
+      if (v === 1) return <>
+        <path d="M12 28C8 9 54 9 52 28c-2 17-16 30-20 30S14 45 12 28Z" fill="#eb8698" />
+        <path d="m32 19-16-9 7 13-13 2 17 4 5-10 6 10 16-4-14-3 8-12Z" fill="#b1ca9e" />
+        <path d="m21 34 1 3m11-5 1 3m9-1-1 3m-15 6 1 3m8-3-1 3m-3 4v2" stroke="#fff4bf" strokeWidth="2.8" />
+      </>
+      return <>
+        {[0, 45, 90, 135].map((angle) => <g key={angle} transform={`rotate(${angle} 32 32)`}>
+          <ellipse cx="32" cy="18" rx="6" ry="13" fill="#fffaf1" /><ellipse cx="32" cy="46" rx="6" ry="13" fill="#fffaf1" />
+        </g>)}
+        <circle cx="32" cy="32" r="9" fill="#f7d97e" /><path d="m29 30 .1 0m6 0 .1 0m-6 5q3 2 6-1" />
+      </>
     case 'cats':
       if (v === 0) return <Cat />
       if (v === 2) return <Cat sleepy />

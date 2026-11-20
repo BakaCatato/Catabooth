@@ -103,6 +103,7 @@ export const FRAME_DESIGN_ORDER: readonly FrameDesignId[] = [
 export type StickerPackId =
   | 'none' | 'cats' | 'girlypop' | 'cute' | 'y2k'
   | 'shinchan' | 'matcha' | 'cyber' | 'coquette' | 'scribbles'
+  | 'cherry-soda' | 'picnic'
 
 export interface StickerPackOption {
   id: StickerPackId
@@ -121,11 +122,14 @@ export const STICKER_PACKS: Record<StickerPackId, StickerPackOption> = {
   cyber: { id: 'cyber', label: 'Cyber', description: 'Retro pixel hearts, gamepads, and arcade sparks.' },
   coquette: { id: 'coquette', label: 'Coquette', description: 'Cherry blossoms, pearls, and a little lace bow.' },
   scribbles: { id: 'scribbles', label: 'Scribbles', description: 'Hand-drawn arrows, crowns, and a cutie note.' },
+  'cherry-soda': { id: 'cherry-soda', label: 'Cherry Soda', description: 'A cherry pair, a soda cap, and fizzy bubbles.' },
+  picnic: { id: 'picnic', label: 'Picnic', description: 'Gingham paper, a strawberry, and a sunny daisy.' },
 }
 
 export const STICKER_PACK_ORDER: readonly StickerPackId[] = [
   'none', 'cats', 'girlypop', 'cute', 'y2k',
   'shinchan', 'matcha', 'cyber', 'coquette', 'scribbles',
+  'cherry-soda', 'picnic',
 ]
 
 /* ------------------------------------------------------------------ */
@@ -191,6 +195,24 @@ export const FILTER_ORDER: readonly FilterId[] = [
   'pixelate',
 ]
 
+export type LookId = 'cat-cafe' | 'cherry-soda' | 'matcha-picnic' | 'midnight-arcade'
+export interface BoothLook {
+  id: LookId
+  label: string
+  note: string
+  frameDesign: FrameDesignId
+  stickerPack: StickerPackId
+  filter: FilterId
+}
+export const LOOKS: readonly BoothLook[] = [
+  { id: 'cat-cafe', label: 'Cat Café', note: 'Warm paper & cozy cats', frameDesign: 'cream', stickerPack: 'cats', filter: 'vintage' },
+  { id: 'cherry-soda', label: 'Cherry Soda', note: 'Pink paper & a little fizz', frameDesign: 'pink', stickerPack: 'cherry-soda', filter: 'original' },
+  { id: 'matcha-picnic', label: 'Matcha Picnic', note: 'Green paper & gingham', frameDesign: 'green', stickerPack: 'picnic', filter: 'vintage' },
+  { id: 'midnight-arcade', label: 'Midnight Arcade', note: 'Dark paper & pixel play', frameDesign: 'dark', stickerPack: 'cyber', filter: 'pixelate' },
+]
+
+export const CAPTION_LIMIT = 40
+
 /** Base64 data URL produced by react-webcam's getScreenshot() */
 export type PhotoDataUrl = string
 
@@ -226,6 +248,11 @@ export interface CustomizationProps {
   filter: FilterId
   frameDesign: FrameDesignId
   stickerPack: StickerPackId
+  caption: string
+  showDate: boolean
+  onLookChange: (look: LookId) => void
+  onCaptionChange: (caption: string) => void
+  onShowDateChange: (showDate: boolean) => void
   onLayoutChange: (layout: LayoutId) => void
   onFilterChange: (filter: FilterId) => void
   onFrameDesignChange: (design: FrameDesignId) => void
@@ -242,6 +269,8 @@ export interface ResultProps {
   filter: FilterId
   frameDesign: FrameDesignId
   stickerPack: StickerPackId
+  caption: string
+  showDate: boolean
   onBack: () => void
   onRestart: () => void
 }

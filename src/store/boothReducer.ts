@@ -1,11 +1,14 @@
 import {
   LAYOUTS,
+  LOOKS,
+  CAPTION_LIMIT,
   getDefaultLayout,
   type BoothMode,
   type FilterId,
   type FrameCount,
   type FrameDesignId,
   type LayoutId,
+  type LookId,
   type PhotoDataUrl,
   type Screen,
   type StickerPackId,
@@ -25,6 +28,8 @@ export interface BoothState {
   filter: FilterId
   frameDesign: FrameDesignId
   stickerPack: StickerPackId
+  caption: string
+  showDate: boolean
 }
 
 export type BoothAction =
@@ -37,6 +42,9 @@ export type BoothAction =
   | { type: 'SET_FILTER'; filter: FilterId }
   | { type: 'SET_FRAME_DESIGN'; frameDesign: FrameDesignId }
   | { type: 'SET_STICKER_PACK'; stickerPack: StickerPackId }
+  | { type: 'APPLY_LOOK'; look: LookId }
+  | { type: 'SET_CAPTION'; caption: string }
+  | { type: 'SET_SHOW_DATE'; showDate: boolean }
   | { type: 'CONFIRM_DESIGN' }
   | { type: 'RETAKE' }
   | { type: 'BACK' }
@@ -52,6 +60,8 @@ export const INITIAL_STATE: BoothState = {
   filter: 'original',
   frameDesign: 'cream',
   stickerPack: 'cats',
+  caption: '',
+  showDate: true,
 }
 
 const PREVIOUS_SCREEN: Record<Screen, Screen> = {
@@ -163,6 +173,12 @@ const ACTION_HANDLERS: ActionHandlerMap = {
   SET_FILTER: (state, action) => ({ ...state, filter: action.filter }),
   SET_FRAME_DESIGN: (state, action) => ({ ...state, frameDesign: action.frameDesign }),
   SET_STICKER_PACK: (state, action) => ({ ...state, stickerPack: action.stickerPack }),
+  APPLY_LOOK: (state, action) => {
+    const look = LOOKS.find((option) => option.id === action.look)
+    return look ? { ...state, frameDesign: look.frameDesign, stickerPack: look.stickerPack, filter: look.filter } : state
+  },
+  SET_CAPTION: (state, action) => ({ ...state, caption: action.caption.slice(0, CAPTION_LIMIT) }),
+  SET_SHOW_DATE: (state, action) => ({ ...state, showDate: action.showDate }),
   CONFIRM_DESIGN: (state) => handleConfirmDesign(state),
   RETAKE: (state) => ({ ...state, photos: [], retakeIndex: null, screen: 'camera' }),
   BACK: (state) => handleBack(state),

@@ -40,7 +40,7 @@ function ScissorsDoodle() {
 }
 
 export default function Result({
-  boothMode, photos, layout, filter, frameDesign, stickerPack = 'cats', onBack, onRestart,
+  boothMode, photos, layout, filter, frameDesign, stickerPack = 'cats', caption, showDate, onBack, onRestart,
 }: ResultProps) {
   const reducedMotion = useReducedMotion()
   const [dateStr] = useState(formatDateStr)
@@ -244,6 +244,8 @@ export default function Result({
                   stickerPack={stickerPack}
                   applyCssFilter={!bakedPhotos}
                   dateStr={dateStr}
+                  caption={caption}
+                  showDate={showDate}
                 />
               </motion.div>
               {!isPrinting && <ScissorsDoodle />}

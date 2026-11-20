@@ -15,6 +15,7 @@ import type {
   FrameCount,
   FrameDesignId,
   LayoutId,
+  LookId,
   PhotoDataUrl,
   Screen,
   StickerPackId,
@@ -54,7 +55,7 @@ const screenVariants: Variants = {
 
 export default function App() {
   const [state, dispatch] = useReducer(boothReducer, INITIAL_STATE)
-  const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign, stickerPack } = state
+  const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign, stickerPack, caption, showDate } = state
 
   // `dispatch` is stable, so these handlers never change identity
   const actions = useMemo(
@@ -71,6 +72,9 @@ export default function App() {
         dispatch({ type: 'SET_FRAME_DESIGN', frameDesign: design }),
       setStickerPack: (pack: StickerPackId) =>
         dispatch({ type: 'SET_STICKER_PACK', stickerPack: pack }),
+      setLook: (look: LookId) => dispatch({ type: 'APPLY_LOOK', look }),
+      setCaption: (caption: string) => dispatch({ type: 'SET_CAPTION', caption }),
+      setShowDate: (showDate: boolean) => dispatch({ type: 'SET_SHOW_DATE', showDate }),
       confirmDesign: () => dispatch({ type: 'CONFIRM_DESIGN' }),
       retake: () => dispatch({ type: 'RETAKE' }),
       back: () => dispatch({ type: 'BACK' }),
@@ -127,6 +131,11 @@ export default function App() {
             frameDesign={frameDesign}
             stickerPack={stickerPack}
             onLayoutChange={actions.setLayout}
+            caption={caption}
+            showDate={showDate}
+            onLookChange={actions.setLook}
+            onCaptionChange={actions.setCaption}
+            onShowDateChange={actions.setShowDate}
             onFilterChange={actions.setFilter}
             onFrameDesignChange={actions.setFrameDesign}
             onStickerPackChange={actions.setStickerPack}
@@ -147,6 +156,8 @@ export default function App() {
             stickerPack={stickerPack}
             onBack={actions.back}
             onRestart={actions.restart}
+            caption={caption}
+            showDate={showDate}
           />
         )
 

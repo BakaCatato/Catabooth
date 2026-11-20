@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FILTERS, type FilterId, type PhotoDataUrl } from '../types/photobooth'
+import { FILTERS, FILTER_ORDER, type FilterId, type PhotoDataUrl } from '../types/photobooth'
 
 const PHOTO_ASPECT = 4 / 3
 
@@ -20,6 +20,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export async function bakeFilteredPhotos(
   photos: readonly PhotoDataUrl[],
   filter: FilterId,
+  maxWidth?: number,
 ): Promise<PhotoDataUrl[]> {
   const { css, pixelSize } = FILTERS[filter]
 
@@ -37,8 +38,8 @@ export async function bakeFilteredPhotos(
       const sy = Math.round((ih - sh) / 2)
 
       const canvas = document.createElement('canvas')
-      canvas.width = sw
-      canvas.height = sh
+      canvas.width = Math.min(sw, maxWidth ?? sw)
+      canvas.height = Math.round(sh * canvas.width / sw)
       const ctx = canvas.getContext('2d')
       if (!ctx) return src
 
@@ -54,7 +55,7 @@ export async function bakeFilteredPhotos(
           tinyCtx.drawImage(img, sx, sy, sw, sh, 0, 0, tinyW, tinyH)
           tinyCtx.filter = 'none'
           ctx.imageSmoothingEnabled = false
-          ctx.drawImage(tiny, 0, 0, tinyW, tinyH, 0, 0, sw, sh)
+          ctx.drawImage(tiny, 0, 0, tinyW, tinyH, 0, 0, canvas.width, canvas.height)
           return canvas.toDataURL('image/jpeg', 0.92)
         }
       }
@@ -62,12 +63,36 @@ export async function bakeFilteredPhotos(
       if (css !== 'none') {
         ctx.filter = css
       }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh)
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
       ctx.filter = 'none'
 
       return canvas.toDataURL('image/jpeg', 0.92)
     }),
   )
+}
+
+/** Only the first photo is baked for the picker, into small canvases.
+ * Pixelation keeps the same source-pixel grid as the finished strip.
+ */
+export function useFilterPreviews(photo: PhotoDataUrl | undefined) {
+  const [previews, setPreviews] = useState<{
+    source: PhotoDataUrl
+    images: Partial<Record<FilterId, PhotoDataUrl>>
+    error: boolean
+  } | null>(null)
+  useEffect(() => {
+    if (!photo) return
+    let cancelled = false
+    Promise.all(FILTER_ORDER.map(async (id) => [id, (await bakeFilteredPhotos([photo], id, 160))[0]] as const))
+      .then((entries) => {
+        if (!cancelled) setPreviews({ source: photo, images: Object.fromEntries(entries), error: false })
+      })
+      .catch(() => {
+        if (!cancelled) setPreviews({ source: photo, images: {}, error: true })
+      })
+    return () => { cancelled = true }
+  }, [photo])
+  return previews?.source === photo ? previews : null
 }
 
 /**
