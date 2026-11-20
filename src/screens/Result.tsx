@@ -264,7 +264,7 @@ export default function Result({
                 {saveState === 'saving' ? 'saving…' : saveState === 'saved' ? 'download again' : 'download'}
               </BrutalButton>
               <button type="button" className="scrapbook-email-toggle" aria-expanded={emailOpen} aria-controls="scrapbook-email-drawer" onClick={() => setEmailOpen(!emailOpen)} disabled={isPrinting}>
-                <Mail aria-hidden="true" size={19} /> send to email
+                <Mail aria-hidden="true" size={19} /> Open email draft
               </button>
               <BrutalButton color="butter" icon={Printer} loading={printState === 'preparing'} disabled={isPrinting || busy} onClick={handlePrint}>
                 {printState === 'preparing' ? 'preparing…' : 'print'}

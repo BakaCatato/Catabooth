@@ -290,7 +290,7 @@ export default function CameraScreen({
         aside={<span className="doodle-pill bg-mint"><ModeIcon size={16} aria-hidden="true" /> {isSelectiveRetake ? 'QUICK RETAKE' : 'YOUR LITTLE PHOTO CORNER'}</span>}
       />
 
-      <div className="camera-layout">
+      <div className={`camera-layout${frameCount === 2 ? ' camera-layout-pair' : ''}`}>
         <div className="camera-cabin">
           <div className="camera-cabin-label">
             <span><span className={`camera-indicator ${status === 'ready' ? 'is-ready' : ''}`} /> {status === 'ready' ? 'CAMERA IS READY' : 'SETTLE IN, LITTLE STAR'}</span>
@@ -318,11 +318,6 @@ export default function CameraScreen({
                 <span key={position} aria-hidden="true" className={`camera-crop-mark ${position}`} />
               ))}
               {status === 'ready' && <span className="camera-live-badge"><span className="camera-indicator is-ready" /> LIVE</span>}
-              {isCapturing && (
-                <span className="camera-shot-badge">
-                  {isSelectiveRetake ? `RETAKING #${retakeIndex + 1}` : `SHOT ${Math.min(currentShot + 1, frameCount)} / ${frameCount}`}
-                </span>
-              )}
               <div aria-live="assertive" className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
                 <AnimatePresence mode="popLayout">
                   {countdown !== null && (
@@ -350,6 +345,11 @@ export default function CameraScreen({
               )}
             </div>
           </div>
+          <p className="camera-pose-status" role="status">
+            {isCapturing
+              ? countdown !== null ? `Pose for shot ${currentShot + 1} of ${frameCount}` : `Shot ${currentShot + 1} captured!`
+              : isSelectiveRetake ? `Ready to retake photo ${retakeIndex + 1}` : 'Ready when you are.'}
+          </p>
           {captureError && <p role="alert" className="camera-error"><TriangleAlert size={18} aria-hidden="true" /> {captureError}</p>}
           <div className="camera-controls">
             <button type="button" className="camera-mirror" onClick={() => setMirrored((value) => !value)} aria-pressed={mirrored}>
@@ -363,14 +363,14 @@ export default function CameraScreen({
             ) : (
               <div role="status" className="camera-capturing">
                 <span className="camera-indicator is-ready" />
-                {isSelectiveRetake ? `RETAKING #${retakeIndex + 1}…` : `SAY CHEESE! (${capturedPhotos.length}/${frameCount})`}
+                {isSelectiveRetake ? 'RETAKING…' : 'SAY CHEESE!'}
               </div>
             )}
           </div>
         </div>
 
         <aside className="camera-photo-strip">
-          <div className="camera-strip-heading"><h2>Your moments</h2><span>{capturedPhotos.length} / {frameCount}</span></div>
+          <div className="camera-strip-heading"><h2>Your moments</h2><span aria-live="polite">{capturedPhotos.length} of {frameCount} taken</span></div>
           <ol className="camera-thumbnail-grid" aria-label="Captured photos">
             {Array.from({ length: frameCount }, (_, i) => {
               const photo = capturedPhotos[i]

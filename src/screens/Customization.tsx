@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import {
   ArrowRight, Check, Columns2, Heart, Palette, RotateCcw, Rows3,
   Sparkles, Sticker, WandSparkles,
@@ -26,6 +26,7 @@ export default function Customization({
   }).toUpperCase())
   const bakedPhotos = useBakedPhotos(photos, filter)
   const { viewportRef, contentRef, scale, height } = usePreviewScale()
+  const retakeDialogRef = useRef<HTMLDialogElement>(null)
 
   return (
     <section className="app-screen customize-screen">
@@ -42,7 +43,8 @@ export default function Customization({
             <div
               ref={contentRef}
               className="studio-preview-scale"
-              style={{ width: layout === '2-column-grid' ? 420 : 280, transform: `translate(-50%, -50%) scale(${scale})` }}
+              data-compact-retakes={layout === 'vertical-strip' && scale < 0.45}
+              style={{ width: layout === '2-column-grid' ? 420 : 280, transform: `translate(-50%, -50%) scale(${scale})`, '--preview-scale': scale } as CSSProperties}
             >
               <PhotoStrip
                 photos={bakedPhotos ?? photos}
@@ -106,11 +108,19 @@ export default function Customization({
           </fieldset>
 
           <div className="studio-actions">
-            <BrutalButton color="cream" size="sm" icon={RotateCcw} onClick={onRetake}>Retake all</BrutalButton>
-            <BrutalButton color="rose" size="sm" icon={ArrowRight} onClick={onConfirm}>Print my strip</BrutalButton>
+            <BrutalButton color="cream" size="sm" icon={RotateCcw} onClick={() => retakeDialogRef.current?.showModal()}>Retake all</BrutalButton>
+            <BrutalButton color="rose" size="sm" icon={ArrowRight} onClick={onConfirm}>Finish my strip</BrutalButton>
           </div>
         </div>
       </div>
+      <dialog ref={retakeDialogRef} className="studio-retake-dialog" aria-labelledby="retake-dialog-title" aria-describedby="retake-dialog-description">
+        <h2 id="retake-dialog-title">Retake every photo?</h2>
+        <p id="retake-dialog-description">This clears all {photos.length} photos and opens the camera for a fresh session.</p>
+        <div className="studio-actions">
+          <BrutalButton color="cream" size="sm" onClick={() => retakeDialogRef.current?.close()}>Cancel</BrutalButton>
+          <BrutalButton color="rose" size="sm" icon={RotateCcw} onClick={() => { retakeDialogRef.current?.close(); onRetake() }}>Retake all photos</BrutalButton>
+        </div>
+      </dialog>
     </section>
   )
 }

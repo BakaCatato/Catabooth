@@ -25,7 +25,7 @@ interface PhotoStripProps {
   stickerPack?: StickerPackId
   /** Set to false when photos already have the filter baked into their pixels */
   applyCssFilter?: boolean
-  /** When provided, each photo becomes clickable to trigger a selective retake */
+  /** Show preview-only controls for selective retakes. Omitted from the finished strip. */
   onPhotoClick?: (index: number) => void
   dateStr?: string
   ref?: Ref<HTMLDivElement>
@@ -151,17 +151,14 @@ export default function PhotoStrip({
                 <button
                   type="button"
                   onClick={() => onPhotoClick(i)}
-                  aria-label={`Retake shot ${i + 1}`}
-                  title={`Click to retake shot #${i + 1}`}
-                  className="group relative block w-full cursor-pointer overflow-hidden p-0 text-left outline-none focus-visible:ring-4 focus-visible:ring-butter"
+                  aria-label={`Retake photo ${i + 1}`}
+                  className="photo-retake relative block w-full cursor-pointer overflow-hidden p-0 text-left"
                   style={{ border: design.cellBorder, backgroundColor: cellBg, lineHeight: 0 }}
                 >
                   {photo}
-                  <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/70 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-butter px-2 py-1 font-display text-sm tracking-wider text-ink shadow-brutal-sm">
-                      <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                      RETAKE #{i + 1}
-                    </span>
+                  <span className="photo-retake-label" data-html2canvas-ignore>
+                    <RotateCcw strokeWidth={2} aria-hidden="true" />
+                    Retake {i + 1}
                   </span>
                 </button>
               ) : (

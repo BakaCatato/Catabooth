@@ -19,7 +19,7 @@
 .menu-handwriting { font-family: 'Segoe Print', 'Bradley Hand', cursive; font-weight: 700; font-size: 12px; transform: rotate(-3deg); }
 
 .frame-screen { max-width: 940px; }
-.booth-menu { margin-block: auto; padding: clamp(14px, 2.5dvh, 24px); border: 3px solid var(--color-ink); border-radius: 22px 18px 25px 20px; background: var(--color-sand); box-shadow: 6px 6px 0 var(--color-ink), inset 0 0 0 7px var(--color-cream); }
+.booth-menu { margin-block: 0; padding: clamp(14px, 2.5dvh, 24px); border: 3px solid var(--color-ink); border-radius: 22px 18px 25px 20px; background: var(--color-sand); box-shadow: 6px 6px 0 var(--color-ink), inset 0 0 0 7px var(--color-cream); }
 .booth-menu-heading { display: flex; align-items: center; gap: 8px; padding-bottom: 14px; font-family: var(--font-display); font-size: 21px; letter-spacing: 0.08em; }
 .booth-menu-heading .menu-handwriting { margin-left: auto; font-size: 11px; letter-spacing: 0; }
 .menu-mode-grid, .menu-shot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -45,11 +45,11 @@
 .camera-indicator { display: inline-block; flex-shrink: 0; width: 10px; height: 10px; border: 2px solid var(--color-ink); border-radius: 50%; background: var(--color-butter); }
 .camera-indicator.is-ready { background: #96c9a7; box-shadow: 0 0 5px #bfe3d0; }
 .camera-stage { display: grid; place-items: center; min-height: 0; padding: 8px; border: 2px solid var(--color-ink); border-radius: 14px; background: repeating-linear-gradient(90deg, #f9efe2 0 38px, #ecdac8 38px 40px); }
-.camera-viewfinder { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border: 3px solid var(--color-ink); border-radius: 12px; background: var(--color-sand); }
+/* The video area, excluding the ink border, matches the strip's 4:3 crop. */
+.camera-viewfinder { position: relative; box-sizing: content-box; width: calc(100% - 6px); aspect-ratio: 4 / 3; overflow: hidden; border: 3px solid var(--color-ink); border-radius: 12px; background: var(--color-sand); }
 .camera-crop-mark { pointer-events: none; position: absolute; z-index: 10; width: 24px; height: 24px; border-color: var(--color-cream); opacity: 0.8; }
-.camera-live-badge, .camera-shot-badge { position: absolute; top: 12px; z-index: 10; display: flex; align-items: center; gap: 5px; padding: 3px 7px; border: 2px solid var(--color-ink); border-radius: 6px; background: var(--color-cream); font-size: 10px; font-weight: 700; }
+.camera-live-badge { position: absolute; top: 12px; z-index: 10; display: flex; align-items: center; gap: 5px; padding: 3px 7px; border: 2px solid var(--color-ink); border-radius: 6px; background: var(--color-cream); font-size: 10px; font-weight: 700; }
 .camera-live-badge { left: 45px; }
-.camera-shot-badge { right: 45px; background: var(--color-butter); }
 .camera-countdown { font-size: clamp(60px, 16dvh, 160px); text-shadow: 4px 4px 0 var(--color-ink); }
 .camera-message { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; background: var(--color-cream); text-align: center; }
 .camera-message > svg { width: 30px; height: 30px; color: #9d5265; flex-shrink: 0; }
@@ -73,6 +73,12 @@
 .camera-retake-label { position: absolute; bottom: 0; inset-inline: 0; background: var(--color-butter); text-align: center; font-size: 8px; font-weight: 700; }
 .camera-strip-note { display: flex; justify-content: center; align-items: center; gap: 7px; margin-top: auto; padding-top: 14px; text-align: center; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 11px; font-weight: 700; }
 
+.camera-pose-status { margin: 0; text-align: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.camera-layout-pair .camera-photo-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px; }
+.camera-layout-pair .camera-thumbnail-grid { grid-template-columns: repeat(2, minmax(0, 80px)); justify-content: center; }
+.camera-layout-pair .camera-strip-note { display: none; }
+.camera-layout-pair .camera-strip-heading { flex-direction: column; align-items: flex-start; border: 0; margin: 0; padding: 0; }
+
 
 @media (min-width: 768px) {
   .app-screen { height: 100%; min-height: 0; gap: clamp(10px, 1.8dvh, 18px); padding: clamp(8px, 1.8dvh, 18px) 22px 16px; }
@@ -84,14 +90,20 @@
   .menu-card-title { font-size: 22px; }
   .camera-layout { grid-template-columns: minmax(0, 1fr) clamp(160px, 19vw, 210px); flex: 1; padding: 0 6px 6px 0; }
   .camera-stage { flex: 1; container-type: size; }
-  .camera-viewfinder { width: min(100cqw, calc(100cqh * 4 / 3)); height: min(75cqw, 100cqh); }
+  .camera-viewfinder { width: min(calc(100cqw - 6px), calc((100cqh - 6px) * 4 / 3)); }
   .camera-thumbnail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .camera-photo-strip { padding: 10px; }
   .camera-strip-heading h2 { font-size: 18px; }
+  .frame-screen { overflow-y: auto; }
+  .camera-layout-pair { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .camera-layout-pair .camera-photo-strip { width: min(100%, 440px); justify-self: center; }
+  .camera-photo-strip { overflow-y: auto; }
+  .camera-strip-heading { flex-wrap: wrap; }
 }
 
 @media (max-width: 767px) {
   .screen-header-aside { flex-basis: 100%; margin-left: 0; }
+  .camera-screen .screen-header-aside { display: none; }
   .screen-title-star { display: none; }
   .menu-mode-grid { gap: 10px; }
   .mode-card { padding-inline: 8px; gap: 8px; }
@@ -109,6 +121,10 @@
   .camera-controls { justify-content: center; }
   .camera-message { gap: 7px; padding: 12px; }
   .camera-message p { font-size: 11px; }
+}
+
+@media (max-width: 400px) {
+  .mode-card .menu-card-title { font-size: 18px; line-height: 1.2; }
 }
 
 @media (min-width: 768px) and (max-height: 650px) {
