@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useReducer } from 'react'
 import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-motion'
+import { Volume2, VolumeX } from 'lucide-react'
+import { BoothSoundsContext, useBoothAudio } from './hooks/useBoothSounds'
 
 import MallArcadeBackground from './components/ui/MallArcadeBackground'
 import './screens/BoothScreens.css'
@@ -54,6 +56,7 @@ const screenVariants: Variants = {
 /* ------------------------------------------------------------------ */
 
 export default function App() {
+  const sounds = useBoothAudio()
   const [state, dispatch] = useReducer(boothReducer, INITIAL_STATE)
   const { screen, boothMode, frameCount, photos, retakeIndex, layout, filter, frameDesign, stickerPack, caption, showDate } = state
 
@@ -169,33 +172,41 @@ export default function App() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="app-shell relative isolate min-h-dvh overflow-x-hidden overflow-y-auto font-body text-ink md:h-dvh md:max-h-dvh md:overflow-hidden">
-        {/* One continuous mall scene behind every screen. */}
-        <motion.div
-          aria-hidden
-          className="absolute inset-0 -z-10"
-          initial={false}
-          animate={{ backgroundColor: SCREEN_BACKDROP[screen] }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
-        >
-          <MallArcadeBackground />
-        </motion.div>
-
-        <AnimatePresence mode="wait" initial={false} onExitComplete={() => window.scrollTo(0, 0)}>
-          <motion.main
-            key={screen}
-            variants={screenVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="mall-content min-h-dvh origin-center md:h-dvh md:max-h-dvh md:overflow-hidden"
-            data-screen={screen}
+    <BoothSoundsContext.Provider value={sounds}>
+      <MotionConfig reducedMotion="user">
+        <div className="app-shell relative isolate min-h-dvh overflow-x-hidden overflow-y-auto font-body text-ink md:h-dvh md:max-h-dvh md:overflow-hidden"
+          onPointerDownCapture={sounds.unlockAudio} onKeyDownCapture={sounds.unlockAudio}>
+          <button type="button" className="booth-mute-toggle" onClick={sounds.toggleMuted}
+            aria-label={sounds.muted ? 'Unmute booth sounds' : 'Mute booth sounds'}
+            title={sounds.muted ? 'Unmute booth sounds' : 'Mute booth sounds'}>
+            {sounds.muted ? <VolumeX size={19} aria-hidden="true" /> : <Volume2 size={19} aria-hidden="true" />}
+          </button>
+          {/* One continuous mall scene behind every screen. */}
+          <motion.div
+            aria-hidden
+            className="absolute inset-0 -z-10"
+            initial={false}
+            animate={{ backgroundColor: SCREEN_BACKDROP[screen] }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
           >
-            {renderScreen()}
-          </motion.main>
-        </AnimatePresence>
-      </div>
-    </MotionConfig>
+            <MallArcadeBackground />
+          </motion.div>
+
+          <AnimatePresence mode="wait" initial={false} onExitComplete={() => window.scrollTo(0, 0)}>
+            <motion.main
+              key={screen}
+              variants={screenVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="mall-content min-h-dvh origin-center md:h-dvh md:max-h-dvh md:overflow-hidden"
+              data-screen={screen}
+            >
+              {renderScreen()}
+            </motion.main>
+          </AnimatePresence>
+        </div>
+      </MotionConfig>
+    </BoothSoundsContext.Provider>
   )
 }

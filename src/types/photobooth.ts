@@ -211,7 +211,7 @@ export const LOOKS: readonly BoothLook[] = [
   { id: 'midnight-arcade', label: 'Midnight Arcade', note: 'Dark paper & pixel play', frameDesign: 'dark', stickerPack: 'cyber', filter: 'pixelate' },
 ]
 
-export const CAPTION_LIMIT = 40
+export const CAPTION_LIMIT = 28
 
 /** Base64 data URL produced by react-webcam's getScreenshot() */
 export type PhotoDataUrl = string

@@ -7,6 +7,7 @@ import BrutalButton from '../components/ui/BrutalButton'
 import ScreenHeader from '../components/ui/ScreenHeader'
 import { FILTERS, FRAME_DESIGNS, type ResultProps } from '../types/photobooth'
 import { usePreviewScale } from '../hooks/usePreviewScale'
+import { useBoothSounds } from '../hooks/useBoothSounds'
 import { bakeFilteredPhotos, useBakedPhotos } from '../utils/photoFilters'
 import './Result.css'
 
@@ -43,6 +44,7 @@ export default function Result({
   boothMode, photos, layout, filter, frameDesign, stickerPack = 'cats', caption, showDate, onBack, onRestart,
 }: ResultProps) {
   const reducedMotion = useReducedMotion()
+  const { playPrintWhir } = useBoothSounds()
   const [dateStr] = useState(formatDateStr)
   const [isPrinting, setIsPrinting] = useState(true)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -64,9 +66,10 @@ export default function Result({
 
   useEffect(() => {
     if (!isPrinting) return
+    const stopWhir = playPrintWhir(reducedMotion ? 0.1 : PRINT_DURATION_SEC)
     const timer = setTimeout(() => setIsPrinting(false), reducedMotion ? 100 : (PRINT_DURATION_SEC + 0.5) * 1000)
-    return () => clearTimeout(timer)
-  }, [isPrinting, reducedMotion])
+    return () => { clearTimeout(timer); stopWhir() }
+  }, [isPrinting, reducedMotion, playPrintWhir])
 
   useEffect(() => {
     if (emailOpen) emailInputRef.current?.focus()

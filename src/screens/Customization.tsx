@@ -138,10 +138,9 @@ export default function Customization({
                 </button>)}
               </div></fieldset>
               <div className="studio-caption-field">
-                <label htmlFor="strip-caption">A little note <span>optional</span></label>
-                <input id="strip-caption" type="text" value={caption} maxLength={CAPTION_LIMIT} placeholder="A day worth keeping…"
+                <label htmlFor="strip-caption">A little note <span id="strip-caption-count">optional · {caption.length} / {CAPTION_LIMIT}</span></label>
+                <input id="strip-caption" type="text" value={caption} maxLength={CAPTION_LIMIT} placeholder="write a little note... ♡"
                   aria-describedby="strip-caption-count" onChange={(event) => onCaptionChange(event.target.value)} />
-                <span id="strip-caption-count">{caption.length} / {CAPTION_LIMIT} characters</span>
               </div>
               <label className="studio-date-toggle"><input type="checkbox" checked={showDate} onChange={(event) => onShowDateChange(event.target.checked)} /> Show date</label>
             </section>

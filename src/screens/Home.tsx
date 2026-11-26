@@ -63,8 +63,9 @@ function FeaturedStrips({ reducedMotion }: { reducedMotion: boolean }) {
               className="booth-mini-strip"
               style={{ backgroundColor: paper, marginTop: index === 1 || index === 2 ? 9 : 0 }}
               initial={false}
-              animate={{ rotate: reducedMotion ? tilt : [tilt, tilt + 3, tilt] }}
-              transition={{ duration: 4.5 + index * 0.4, ease: 'easeInOut', repeat: Infinity }}
+              animate={{ rotate: tilt }}
+              whileHover={reducedMotion ? undefined : { rotate: [tilt, tilt + 4, tilt - 2, tilt] }}
+              transition={{ duration: 1.6, ease: 'easeInOut' }}
             >
               <span className="booth-clothespin" />
               {[0, 1, 2].map((pose) => (
@@ -129,7 +130,7 @@ export default function Home({ onStart }: HomeProps) {
   const [visitorCount, setVisitorCount] = useState(readVisitorCount)
   const dispensedRef = useRef(false)
   const startButtonRef = useRef<HTMLButtonElement>(null)
-  const playSound = useBoothSounds()
+  const { playSound, playCurtainSwoosh } = useBoothSounds()
   const reducedMotion = useReducedMotion() ?? false
   const isOpen = curtainState === 'open'
   const isClosing = curtainState === 'closing'
@@ -143,9 +144,10 @@ export default function Home({ onStart }: HomeProps) {
   }
 
   const unlockCurtain = useCallback(() => {
+    playCurtainSwoosh()
     setTokenStep('token-inserted')
     setCurtainState('open')
-  }, [])
+  }, [playCurtainSwoosh])
 
   useEffect(() => {
     const syncCount = (event: StorageEvent) => {
@@ -162,9 +164,10 @@ export default function Home({ onStart }: HomeProps) {
   useEffect(() => {
     if (curtainState !== 'closing') return
 
+    const stopSwoosh = playCurtainSwoosh()
     const timer = window.setTimeout(onStart, 550)
-    return () => window.clearTimeout(timer)
-  }, [curtainState, onStart])
+    return () => { window.clearTimeout(timer); stopSwoosh() }
+  }, [curtainState, onStart, playCurtainSwoosh])
 
   return (
     <section className="booth-home relative flex flex-col items-center justify-center px-4 pb-12 pt-4 text-ink sm:px-8 sm:pb-14" aria-labelledby="booth-title">
@@ -200,13 +203,23 @@ export default function Home({ onStart }: HomeProps) {
                 <span className="booth-entrance-note" aria-hidden="true">hi, happy human!</span>
               </div>
               <FeaturedStrips reducedMotion={reducedMotion} />
-              <TokenDispenser
-                tokenStep={tokenStep}
-                reducedMotion={reducedMotion}
-                onDispense={dispenseToken}
-                onInsertSound={() => playSound('insert')}
-                onInserted={unlockCurtain}
-              />
+              <div className="booth-service-row">
+                <TokenDispenser
+                  tokenStep={tokenStep}
+                  reducedMotion={reducedMotion}
+                  onDispense={dispenseToken}
+                  onInsertSound={() => playSound('insert')}
+                  onInserted={unlockCurtain}
+                />
+                <div className="booth-photo-pickup" aria-hidden="true">
+                  <span className="booth-photo-label">PHOTO PICKUP ↓</span>
+                  <div className="booth-photo-chute">
+                    <span className="booth-photo-slit" />
+                    <span className="booth-photo-cover" />
+                  </div>
+                  <span className="booth-photo-caption">little keepsakes</span>
+                </div>
+              </div>
               <div className="booth-note mt-5 flex items-center justify-center gap-2 text-center text-[9px] font-bold uppercase tracking-[0.14em]">
                 <Cat size={19} strokeWidth={2.5} aria-hidden="true" />
                 Made for you & your favorite humans

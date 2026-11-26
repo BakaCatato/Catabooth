@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Webcam from 'react-webcam'
+import { useBoothSounds } from '../hooks/useBoothSounds'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowLeftRight,
@@ -56,70 +57,6 @@ function sleep(ms: number, signal: AbortSignal) {
   })
 }
 
-/**
- * Generates an in-memory WAV data URL for a crisp mechanical camera shutter
- * click + flash capacitor pop so it can be played via standard HTML5 <audio>.
- */
-function createShutterSoundDataUrl(): string {
-  const sampleRate = 22050
-  const numSamples = Math.floor(sampleRate * 0.14)
-  const buffer = new ArrayBuffer(44 + numSamples * 2)
-  const view = new DataView(buffer)
-
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i))
-    }
-  }
-
-  writeStr(0, 'RIFF')
-  view.setUint32(4, 36 + numSamples * 2, true)
-  writeStr(8, 'WAVE')
-  writeStr(12, 'fmt ')
-  view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
-  view.setUint16(22, 1, true)
-  view.setUint32(24, sampleRate, true)
-  view.setUint32(28, sampleRate * 2, true)
-  view.setUint16(32, 2, true)
-  view.setUint16(34, 16, true)
-  writeStr(36, 'data')
-  view.setUint32(40, numSamples * 2, true)
-
-  for (let i = 0; i < numSamples; i++) {
-    const t = i / sampleRate
-    // First curtain snap at t = 0, second curtain snap at t = 0.045s
-    const snap1 = Math.exp(-t * 95) * (Math.random() * 2 - 1)
-    const snap2 = t > 0.045 ? Math.exp(-(t - 0.045) * 110) * (Math.random() * 2 - 1) * 0.85 : 0
-    const tone = Math.sin(2 * Math.PI * 1150 * t) * Math.exp(-t * 75) * 0.45
-    const sample = Math.max(-1, Math.min(1, (snap1 + snap2 + tone) * 0.9))
-    view.setInt16(44 + i * 2, sample * 32767, true)
-  }
-
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return `data:audio/wav;base64,${btoa(binary)}`
-}
-
-let cachedShutterUrl: string | null = null
-
-/** Plays a realistic camera shutter click sound when the flash triggers */
-function playShutterSound() {
-  try {
-    if (!cachedShutterUrl) {
-      cachedShutterUrl = createShutterSoundDataUrl()
-    }
-    const audio = new Audio(cachedShutterUrl)
-    audio.volume = 0.85
-    void audio.play().catch(() => undefined)
-  } catch {
-    // Ignore audio errors if blocked by browser autoplay policy
-  }
-}
-
 function describeCameraError(err: string | DOMException): string {
   const name = typeof err === 'string' ? '' : err.name
   switch (name) {
@@ -149,6 +86,7 @@ export default function CameraScreen({
   onComplete,
   onBack,
 }: CameraScreenProps) {
+  const { playShutterSound } = useBoothSounds()
   const webcamRef = useRef<Webcam>(null)
   const abortRef = useRef<AbortController | null>(null)
   const autoRetakeStartedRef = useRef(false)
@@ -271,7 +209,7 @@ export default function CameraScreen({
       if (!isSelectiveRetake) setCapturedPhotos([])
       setCaptureError('Lost the camera feed during capture. Check your camera and try again.')
     }
-  }, [countdownSeconds, frameCount, isCapturing, isSelectiveRetake, onComplete, retakeIndex, status])
+  }, [countdownSeconds, frameCount, isCapturing, isSelectiveRetake, onComplete, retakeIndex, status, playShutterSound])
 
   // Automatically start the 3s selective retake countdown as soon as the camera stream is ready
   useEffect(() => {

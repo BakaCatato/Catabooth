@@ -45,7 +45,7 @@
 .studio-caption-field { display: grid; gap: 6px; }
 .studio-caption-field label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; }
 .studio-caption-field label span, #strip-caption-count { font-size: 11px; font-weight: 400; }
-.studio-caption-field input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 2px solid #2a211d; border-radius: 7px; background: #fffaf1; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 14px; }
+.studio-caption-field input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 2px solid #2a211d; border-radius: 8px 5px 9px 6px; background: #fffaf1; color: #2a211d; box-shadow: inset 0 -3px 0 #f9efe2; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 14px; }
 #strip-caption-count { text-align: right; }
 .studio-date-toggle { display: flex; gap: 9px; align-items: center; min-height: 44px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .studio-date-toggle input { width: 20px; height: 20px; accent-color: #2a211d; }

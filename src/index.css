@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+.booth-mute-toggle {
+  position: fixed;
+  z-index: 80;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+  border: 2px solid #2a211d;
+  border-radius: 11px 8px 12px 9px;
+  background: #fffaf1;
+  color: #2a211d;
+  box-shadow: 2px 3px 0 #2a211d;
+  cursor: pointer;
+}
+.booth-mute-toggle:hover { background: #f8e6a7; }
+.booth-mute-toggle:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 #2a211d; }
+.booth-mute-toggle:focus-visible { outline: 3px solid #b84c6a; outline-offset: 3px; }
+@media (max-width: 400px) {
+  .app-shell:has(.booth-home) .mall-hanging-sign { left: calc(50% - 20px); }
+}
+@media print { .booth-mute-toggle { display: none; } }
+
 /*
  * Cozy pastel doodle tokens. Legacy pop-* names keep shared controls consistent.
  * NOTE: Colors are HEX on purpose — html2canvas cannot parse Tailwind v4's
